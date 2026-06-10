@@ -26,9 +26,9 @@
   };
 
   const COLORS = {
-    roadTop: "#dfe7e2",
-    roadSide: "#b7c5bd",
-    edge: "#f6fbf7",
+    roadTop: "#ead7c1",
+    roadSide: "#b79b83",
+    edge: "#fff1d9",
     wood: "#b96c34",
     woodDark: "#73411f",
     shirt: "#38a66b",
@@ -133,32 +133,168 @@
     const w = state.width;
     const h = state.height;
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#9bd7d7");
-    g.addColorStop(0.46, "#bfe6cb");
-    g.addColorStop(1, "#ead69a");
+    g.addColorStop(0, "#2460a7");
+    g.addColorStop(0.42, "#5fb3ec");
+    g.addColorStop(0.72, "#d9f4ff");
+    g.addColorStop(1, "#ffffff");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
 
+    drawSunRays();
+    drawCloudBank(h * 0.14, 0.82, 0.78);
+    drawCloudBank(h * 0.68, 1.2, 0.62);
+    drawTemplePillars();
+
     ctx.save();
-    ctx.globalAlpha = 0.72;
-    for (let i = 0; i < 48; i += 1) {
-      const x = ((i * 83 + state.time * 8) % (w + 120)) - 60;
-      const y = h * 0.2 + (i % 8) * h * 0.062;
-      const r = 22 + (i % 5) * 8;
-      ctx.fillStyle = i % 3 === 0 ? "#4e9a64" : i % 3 === 1 ? "#75b36f" : "#397f5d";
+    ctx.globalAlpha = 0.48;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, h * 0.79, w, h * 0.21);
+    ctx.restore();
+    drawForegroundMist();
+  }
+
+  function drawForegroundMist() {
+    const w = state.width;
+    const h = state.height;
+    const mist = ctx.createLinearGradient(0, h * 0.64, 0, h);
+    mist.addColorStop(0, "rgba(255,255,255,0)");
+    mist.addColorStop(0.62, "rgba(225,247,255,0.42)");
+    mist.addColorStop(1, "rgba(255,255,255,0.66)");
+    ctx.fillStyle = mist;
+    ctx.fillRect(0, h * 0.64, w, h * 0.36);
+
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    for (let i = 0; i < 7; i += 1) {
+      const x = ((i * 97 + state.time * 9) % (w + 160)) - 80;
+      const y = h * (0.78 + (i % 3) * 0.055);
+      const r = 32 + (i % 4) * 11;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.arc(x + r * 0.75, y + 6, r * 0.8, 0, Math.PI * 2);
-      ctx.arc(x - r * 0.65, y + 9, r * 0.78, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.86, y + 5, r * 0.72, 0, Math.PI * 2);
+      ctx.arc(x - r * 0.72, y + 8, r * 0.66, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
+  }
 
-    ctx.fillStyle = "rgba(255,255,255,0.38)";
+  function drawSunRays() {
+    const w = state.width;
+    const h = state.height;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#ffffff";
+    ctx.translate(w * 0.72, h * 0.05);
+    for (let i = 0; i < 4; i += 1) {
+      ctx.rotate(0.16);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(w * 0.13, h);
+      ctx.lineTo(w * 0.24, h);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawCloudBank(baseY, scale, alpha) {
+    const w = state.width;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (let i = 0; i < 12; i += 1) {
+      const x = ((i * 91 - state.time * 7 * scale) % (w + 180)) - 90;
+      const y = baseY + Math.sin(i * 1.7) * 22 * scale;
+      const r = (24 + (i % 4) * 10) * scale;
+      ctx.fillStyle = i % 3 === 0 ? "#ffffff" : "#dff5ff";
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.85, y + r * 0.1, r * 0.8, 0, Math.PI * 2);
+      ctx.arc(x - r * 0.75, y + r * 0.16, r * 0.72, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawTemplePillars() {
+    const w = state.width;
+    const h = state.height;
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    for (let i = 0; i < 9; i += 1) {
+      const x = w * (-0.08 + i * 0.145);
+      const y = h * (0.22 + (i % 3) * 0.05);
+      drawPillar(x, y, 0.28 + (i % 4) * 0.06);
+    }
+    ctx.restore();
+
+    const specs = [
+      [-0.08, 0.33, 0.62],
+      [0.13, 0.39, 0.48],
+      [0.32, 0.35, 0.82],
+      [0.57, 0.42, 0.5],
+      [0.78, 0.34, 0.68],
+      [1.05, 0.28, 0.9],
+    ];
+    for (const [nx, ny, s] of specs) {
+      drawPillar(w * nx, h * ny, s);
+    }
+    drawBridgeArc(w * 0.03, h * 0.5, w * 0.5, h * 0.48);
+    drawBridgeArc(w * 0.53, h * 0.52, w * 0.95, h * 0.5);
+
+    ctx.save();
+    ctx.globalAlpha = 0.24;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(w * 0.72, h * 0.18, 68, 18, -0.1, 0, Math.PI * 2);
-    ctx.ellipse(w * 0.82, h * 0.17, 46, 14, 0.1, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(w * 0.1, h * 0.56);
+    ctx.bezierCurveTo(w * 0.3, h * 0.48, w * 0.62, h * 0.5, w * 0.92, h * 0.43);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPillar(x, y, s) {
+    const h = state.height;
+    const colW = 20 * s;
+    const colH = h * 0.42 * s;
+    ctx.save();
+    ctx.globalAlpha = 0.42 + 0.28 * s;
+    ctx.fillStyle = "#f6dfc3";
+    ctx.strokeStyle = "rgba(102, 129, 177, 0.28)";
+    ctx.lineWidth = Math.max(1, 2 * s);
+    roundRect(x - colW / 2, y, colW, colH, 4 * s, "#f5e5d4");
+    ctx.fillStyle = "#fff6e8";
+    ctx.fillRect(x - colW * 0.18, y + 8 * s, colW * 0.36, colH - 16 * s);
+    ctx.fillStyle = "rgba(178, 139, 105, 0.22)";
+    for (let i = 0; i < 5; i += 1) {
+      ctx.fillRect(x - colW * 0.42 + i * colW * 0.2, y + 10 * s, colW * 0.045, colH - 20 * s);
+    }
+    roundRect(x - colW * 0.9, y - 12 * s, colW * 1.8, 12 * s, 4 * s, "#fff0d7");
+    roundRect(x - colW * 0.65, y - 25 * s, colW * 1.3, 10 * s, 4 * s, "#f8d8b7");
+    roundRect(x - colW * 0.75, y + colH, colW * 1.5, 12 * s, 4 * s, "#d7b89f");
+    ctx.restore();
+  }
+
+  function drawBridgeArc(x1, y1, x2, y2) {
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = "#f6e5d2";
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 7; i += 1) {
+      const t = i / 6;
+      const x = x1 + (x2 - x1) * t;
+      const y = y1 + (y2 - y1) * t;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + 58);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawTrack() {
@@ -208,13 +344,37 @@
     ctx.fill();
 
     ctx.strokeStyle = COLORS.edge;
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(p1.x - w1, p1.y);
     ctx.lineTo(p2.x - w2, p2.y);
     ctx.moveTo(p1.x + w1, p1.y);
     ctx.lineTo(p2.x + w2, p2.y);
     ctx.stroke();
+
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = "#9d745e";
+    ctx.lineWidth = Math.max(0.6, 1.1 * p1.s);
+    ctx.beginPath();
+    ctx.moveTo(p1.x - w1 * 0.42, p1.y + 1 * p1.s);
+    ctx.lineTo(p2.x - w2 * 0.42, p2.y + 1 * p2.s);
+    ctx.moveTo(p1.x + w1 * 0.42, p1.y + 1 * p1.s);
+    ctx.lineTo(p2.x + w2 * 0.42, p2.y + 1 * p2.s);
+    ctx.stroke();
+    ctx.restore();
+
+    if (Math.floor(z1 * 1.4) % 4 === 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = "#b48c72";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(p1.x - w1 * 0.68, p1.y + 2 * p1.s);
+      ctx.lineTo(p1.x + w1 * 0.68, p1.y + 2 * p1.s);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   function drawGap(gap) {

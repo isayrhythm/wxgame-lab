@@ -49,10 +49,10 @@
 
   const colors = {
     ink: "#172425",
-    road: "#dfe8e4",
-    roadSide: "#aebdb8",
-    grassA: "#68a66d",
-    grassB: "#3f8462",
+    road: "#ead7c1",
+    roadSide: "#b79b83",
+    grassA: "#ffffff",
+    grassB: "#dff5ff",
     green: "#35b979",
     violet: "#6755d7",
     red: "#d94d62",
@@ -524,32 +524,169 @@
 
   function drawBackground() {
     const g = ctx.createLinearGradient(0, 0, 0, state.height);
-    g.addColorStop(0, "#aee0ef");
-    g.addColorStop(0.52, "#d8efdf");
-    g.addColorStop(1, "#d8c08a");
+    g.addColorStop(0, "#2460a7");
+    g.addColorStop(0.42, "#5fb3ec");
+    g.addColorStop(0.72, "#d9f4ff");
+    g.addColorStop(1, "#ffffff");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, state.width, state.height);
 
+    drawSkyRays();
+    drawSkyClouds(state.height * 0.14, 0.82, 0.78);
+    drawTempleRuins();
+    drawSkyClouds(state.height * 0.7, 1.15, 0.62);
+
     ctx.save();
-    ctx.globalAlpha = 0.78;
-    for (let i = 0; i < 30; i += 1) {
-      const x = ((i * 79 - state.scroll * 0.18) % (state.width + 100)) - 50;
-      const y = state.height * 0.25 + (i % 6) * 58;
-      const r = 22 + (i % 4) * 9;
-      ctx.fillStyle = i % 2 ? colors.grassA : colors.grassB;
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, state.height * 0.8, state.width, state.height * 0.2);
+    ctx.restore();
+    drawForegroundMist();
+  }
+
+  function drawForegroundMist() {
+    const w = state.width;
+    const h = state.height;
+    const mist = ctx.createLinearGradient(0, h * 0.64, 0, h);
+    mist.addColorStop(0, "rgba(255,255,255,0)");
+    mist.addColorStop(0.62, "rgba(225,247,255,0.42)");
+    mist.addColorStop(1, "rgba(255,255,255,0.66)");
+    ctx.fillStyle = mist;
+    ctx.fillRect(0, h * 0.64, w, h * 0.36);
+
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    for (let i = 0; i < 7; i += 1) {
+      const x = ((i * 97 + state.scroll * 0.08) % (w + 160)) - 80;
+      const y = h * (0.78 + (i % 3) * 0.055);
+      const r = 32 + (i % 4) * 11;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.arc(x + r * 0.76, y + 5, r * 0.82, 0, Math.PI * 2);
-      ctx.arc(x - r * 0.62, y + 8, r * 0.76, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.86, y + 5, r * 0.72, 0, Math.PI * 2);
+      ctx.arc(x - r * 0.72, y + 8, r * 0.66, 0, Math.PI * 2);
       ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawSkyRays() {
+    const w = state.width;
+    const h = state.height;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#ffffff";
+    ctx.translate(w * 0.72, h * 0.04);
+    for (let i = 0; i < 4; i += 1) {
+      ctx.rotate(0.15);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(w * 0.12, h);
+      ctx.lineTo(w * 0.23, h);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawSkyClouds(baseY, scale, alpha) {
+    const w = state.width;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (let i = 0; i < 12; i += 1) {
+      const x = ((i * 91 - state.scroll * 0.06 * scale) % (w + 180)) - 90;
+      const y = baseY + Math.sin(i * 1.7) * 22 * scale;
+      const r = (24 + (i % 4) * 10) * scale;
+      ctx.fillStyle = i % 3 === 0 ? "#ffffff" : "#dff5ff";
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.85, y + r * 0.1, r * 0.8, 0, Math.PI * 2);
+      ctx.arc(x - r * 0.75, y + r * 0.16, r * 0.72, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawTempleRuins() {
+    const w = state.width;
+    const h = state.height;
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    for (let i = 0; i < 9; i += 1) {
+      const x = w * (-0.08 + i * 0.145);
+      const y = h * (0.22 + (i % 3) * 0.05);
+      drawTempleColumn(x, y, 0.28 + (i % 4) * 0.06);
+    }
+    ctx.restore();
+
+    const specs = [
+      [-0.05, 0.34, 0.56],
+      [0.18, 0.41, 0.44],
+      [0.36, 0.32, 0.78],
+      [0.61, 0.42, 0.5],
+      [0.79, 0.35, 0.66],
+      [1.03, 0.28, 0.86],
+    ];
+    for (const [nx, ny, s] of specs) drawTempleColumn(w * nx, h * ny, s);
+    drawTempleBridge(w * 0.02, h * 0.51, w * 0.45, h * 0.49);
+    drawTempleBridge(w * 0.56, h * 0.53, w * 0.97, h * 0.5);
+
+    ctx.save();
+    ctx.globalAlpha = 0.24;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.1, h * 0.56);
+    ctx.bezierCurveTo(w * 0.3, h * 0.48, w * 0.62, h * 0.5, w * 0.92, h * 0.43);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawTempleColumn(x, y, s) {
+    const h = state.height;
+    const colW = 20 * s;
+    const colH = h * 0.42 * s;
+    ctx.save();
+    ctx.globalAlpha = 0.42 + 0.28 * s;
+    roundedRect(x - colW / 2, y, colW, colH, 4 * s, "#f5e5d4");
+    ctx.fillStyle = "#fff6e8";
+    ctx.fillRect(x - colW * 0.18, y + 8 * s, colW * 0.36, colH - 16 * s);
+    ctx.fillStyle = "rgba(178, 139, 105, 0.22)";
+    for (let i = 0; i < 5; i += 1) {
+      ctx.fillRect(x - colW * 0.42 + i * colW * 0.2, y + 10 * s, colW * 0.045, colH - 20 * s);
+    }
+    roundedRect(x - colW * 0.9, y - 12 * s, colW * 1.8, 12 * s, 4 * s, "#fff0d7");
+    roundedRect(x - colW * 0.65, y - 25 * s, colW * 1.3, 10 * s, 4 * s, "#f8d8b7");
+    roundedRect(x - colW * 0.75, y + colH, colW * 1.5, 12 * s, 4 * s, "#d7b89f");
+    ctx.restore();
+  }
+
+  function drawTempleBridge(x1, y1, x2, y2) {
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = "#f6e5d2";
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 7; i += 1) {
+      const t = i / 6;
+      const x = x1 + (x2 - x1) * t;
+      const y = y1 + (y2 - y1) * t;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + 58);
+      ctx.stroke();
     }
     ctx.restore();
   }
 
   function drawRoad() {
     const center = state.width * 0.5;
-    const topW = Math.min(112, state.width * 0.32);
-    const botW = Math.min(260, state.width * 0.72);
+    const topW = Math.min(92, state.width * 0.24);
+    const botW = Math.min(238, state.width * 0.64);
     ctx.fillStyle = colors.roadSide;
     ctx.beginPath();
     ctx.moveTo(center - topW, 80);
@@ -558,6 +695,25 @@
     ctx.lineTo(center - botW, state.height + 20);
     ctx.closePath();
     ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "#6f5c55";
+    ctx.beginPath();
+    ctx.moveTo(center - botW, state.height + 20);
+    ctx.lineTo(center - botW + 16, state.height + 20);
+    ctx.lineTo(center - topW + 10, 80);
+    ctx.lineTo(center - topW, 80);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(center + botW, state.height + 20);
+    ctx.lineTo(center + botW - 16, state.height + 20);
+    ctx.lineTo(center + topW - 10, 80);
+    ctx.lineTo(center + topW, 80);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     ctx.fillStyle = colors.road;
     ctx.beginPath();
@@ -568,14 +724,41 @@
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.82)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255, 244, 222, 0.92)";
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(center - topW + 10, 80);
     ctx.lineTo(center - botW + 16, state.height + 20);
     ctx.moveTo(center + topW - 10, 80);
     ctx.lineTo(center + botW - 16, state.height + 20);
     ctx.stroke();
+
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = "#b48c72";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i += 1) {
+      const t = i / 7;
+      const y = 100 + (state.height - 110) * t;
+      const half = topW + (botW - topW) * t;
+      ctx.beginPath();
+      ctx.moveTo(center - half + 18, y);
+      ctx.lineTo(center + half - 18, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.strokeStyle = "#9d745e";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(center - botW * 0.34, state.height + 20);
+    ctx.lineTo(center - topW * 0.28, 86);
+    ctx.moveTo(center + botW * 0.34, state.height + 20);
+    ctx.lineTo(center + topW * 0.28, 86);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawGates() {

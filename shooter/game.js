@@ -1,17 +1,13 @@
 (() => {
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
+  const ui = window.WxGameUi.createGameUi();
+  const { canvas, ctx, panel, primaryButton, pauseButton } = ui;
   const monsterLabel = document.getElementById("monsterCount");
   const squadLabel = document.getElementById("squadCount");
-  const overlay = document.getElementById("overlay");
-  const panel = overlay.querySelector(".panel");
-  const primaryButton = document.getElementById("primaryButton");
-  const pauseButton = document.getElementById("pauseButton");
 
   const BOSS_AFTER_WAVE = 4;
 
   const weapons = {
-    rifle: { name: "Rifle", icon: "R", color: "#ffe071", damage: 7, delay: 0.17, shots: 1, spread: 0, speed: 640, size: 4 },
+    rifle: { name: "Rifle", icon: "R", color: "#ffbf2f", damage: 7, delay: 0.17, shots: 1, spread: 0, speed: 640, size: 5 },
     shotgun: { name: "Shotgun", icon: "S", color: "#ff9f43", damage: 5, delay: 0.26, shots: 5, spread: 175, speed: 570, size: 4 },
     laser: { name: "Laser", icon: "L", color: "#57e5ff", damage: 0.25, delay: 0.018, shots: 1, spread: 0, speed: 0, size: 5 },
     rocket: { name: "Rocket", icon: "B", color: "#ff5d6f", damage: 32, delay: 0.4, shots: 1, spread: 0, speed: 480, size: 8, splash: 50 },
@@ -49,8 +45,8 @@
 
   const colors = {
     ink: "#172425",
-    road: "#ead7c1",
-    roadSide: "#b79b83",
+    road: "#f6f4ee",
+    roadSide: "#b9aa99",
     grassA: "#ffffff",
     grassB: "#dff5ff",
     green: "#35b979",
@@ -114,7 +110,7 @@
     state.supplies = [];
     state.sparks = [];
     spawnBugWave();
-    overlay.classList.add("hidden");
+    ui.hideOverlay();
     pauseButton.textContent = "Ⅱ";
     updateHud();
   }
@@ -471,7 +467,7 @@
     if (state.status === "paused") {
       state.status = "playing";
       state.last = performance.now();
-      overlay.classList.add("hidden");
+      ui.hideOverlay();
       pauseButton.textContent = "Ⅱ";
       return;
     }
@@ -483,15 +479,15 @@
   }
 
   function showPause() {
-    overlay.classList.remove("hidden");
-    panel.innerHTML = `
+    ui.showOverlay();
+    ui.setPanel(`
       <p class="kicker">Paused</p>
       <h1>暂停</h1>
       <p class="hint">当前武器 ${currentWeapon().name}，企鹅小队 ${Math.max(0, Math.floor(state.squad))} 只。</p>
       <button id="resumeButton" type="button">继续</button>
       <button id="restartButton" class="secondary-button" type="button">重新开始</button>
       <a class="panel-link" href="../">返回大厅</a>
-    `;
+    `);
     panel.querySelector("#resumeButton").addEventListener("click", togglePause);
     panel.querySelector("#restartButton").addEventListener("click", resetGame);
   }
@@ -500,13 +496,13 @@
     state.status = won ? "won" : "lost";
     pauseButton.textContent = "Ⅱ";
     updateHud();
-    overlay.classList.remove("hidden");
-    panel.innerHTML = `
+    ui.showOverlay();
+    ui.setPanel(`
       <p class="kicker">${won ? "Victory" : "Game Over"}</p>
       <h1>${title}</h1>
       <p class="hint">${won ? `Cleared ${state.cleared} bug waves and the night heron boss. Penguins left: ${Math.max(0, Math.floor(state.squad))}.` : "战斗段和补给段交替出现，人数门不会给武器，武器只从箱子获得。"}</p>
       <button id="primaryButton" type="button">${won ? "再打一局" : "重新开始"}</button>
-    `;
+    `);
     panel.querySelector("button").addEventListener("click", resetGame);
   }
 
@@ -687,7 +683,10 @@
     const center = state.width * 0.5;
     const topW = Math.min(92, state.width * 0.24);
     const botW = Math.min(238, state.width * 0.64);
-    ctx.fillStyle = colors.roadSide;
+    const side = ctx.createLinearGradient(0, 80, 0, state.height);
+    side.addColorStop(0, "#d6cabc");
+    side.addColorStop(1, "#83766b");
+    ctx.fillStyle = side;
     ctx.beginPath();
     ctx.moveTo(center - topW, 80);
     ctx.lineTo(center + topW, 80);
@@ -715,7 +714,11 @@
     ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = colors.road;
+    const top = ctx.createLinearGradient(0, 80, 0, state.height);
+    top.addColorStop(0, "#ffffff");
+    top.addColorStop(0.58, colors.road);
+    top.addColorStop(1, "#ded8cf");
+    ctx.fillStyle = top;
     ctx.beginPath();
     ctx.moveTo(center - topW + 10, 80);
     ctx.lineTo(center + topW - 10, 80);
@@ -724,7 +727,7 @@
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(255, 244, 222, 0.92)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
     ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(center - topW + 10, 80);
@@ -735,7 +738,7 @@
 
     ctx.save();
     ctx.globalAlpha = 0.28;
-    ctx.strokeStyle = "#b48c72";
+    ctx.strokeStyle = "#bdb1a5";
     ctx.lineWidth = 1;
     for (let i = 0; i < 8; i += 1) {
       const t = i / 7;
@@ -938,30 +941,50 @@
   }
 
   function drawBullets() {
-    const weapon = currentWeapon();
     ctx.lineCap = "round";
     for (const bullet of state.bullets) {
-      ctx.strokeStyle = bullet.color;
-      ctx.lineWidth = bullet.size;
-      ctx.beginPath();
       if (bullet.type === "laser") {
-        ctx.globalAlpha = 0.78;
-        ctx.lineWidth = bullet.size + 4;
-        ctx.strokeStyle = "rgba(180, 248, 255, 0.28)";
+        ctx.save();
+        ctx.globalAlpha = 0.92;
+        ctx.shadowColor = "#49eaff";
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = "rgba(23, 97, 130, 0.34)";
+        ctx.lineWidth = bullet.size + 8;
+        ctx.beginPath();
         ctx.moveTo(bullet.x, bullet.y);
         ctx.lineTo(bullet.x, 0);
         ctx.stroke();
-        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "rgba(230, 255, 255, 0.95)";
+        ctx.lineWidth = Math.max(2, bullet.size * 0.55);
         ctx.beginPath();
-        ctx.strokeStyle = bullet.color;
-        ctx.lineWidth = bullet.size;
         ctx.moveTo(bullet.x, bullet.y);
         ctx.lineTo(bullet.x, 0);
+        ctx.stroke();
+        ctx.strokeStyle = bullet.color;
+        ctx.lineWidth = bullet.size;
+        ctx.beginPath();
+        ctx.moveTo(bullet.x, bullet.y);
+        ctx.lineTo(bullet.x, 0);
+        ctx.stroke();
+        ctx.restore();
       } else {
+        ctx.strokeStyle = "rgba(34, 35, 38, 0.5)";
+        ctx.lineWidth = bullet.size + 4;
+        ctx.beginPath();
         ctx.moveTo(bullet.x, bullet.y + 12);
         ctx.lineTo(bullet.x - bullet.vx * 0.018, bullet.y - 12);
+        ctx.stroke();
+
+        ctx.shadowColor = bullet.color;
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = bullet.color;
+        ctx.lineWidth = bullet.size;
+        ctx.beginPath();
+        ctx.moveTo(bullet.x, bullet.y + 12);
+        ctx.lineTo(bullet.x - bullet.vx * 0.018, bullet.y - 12);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       }
-      ctx.stroke();
     }
   }
 

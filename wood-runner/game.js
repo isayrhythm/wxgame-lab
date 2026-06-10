@@ -1,11 +1,8 @@
 (() => {
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
+  const ui = window.WxGameUi.createGameUi();
+  const { canvas, ctx, panel, primaryButton } = ui;
   const plankLabel = document.getElementById("plankCount");
   const coinLabel = document.getElementById("coinCount");
-  const overlay = document.getElementById("overlay");
-  const primaryButton = document.getElementById("primaryButton");
-  const panel = overlay.querySelector(".panel");
 
   const state = {
     status: "ready",
@@ -26,11 +23,14 @@
   };
 
   const COLORS = {
-    roadTop: "#ead7c1",
-    roadSide: "#b79b83",
-    edge: "#fff1d9",
+    roadTop: "#f5f3ee",
+    roadSide: "#b9aa99",
+    roadUnderside: "#7f756c",
+    roadLine: "#cbc2b6",
+    edge: "#ffffff",
     wood: "#b96c34",
     woodDark: "#73411f",
+    woodLight: "#e0a05d",
     shirt: "#38a66b",
     shorts: "#5b7b7a",
     skin: "#d99a68",
@@ -72,10 +72,10 @@
         makeGate(71, "+12", "add", 12, "-8", "add", -8),
       ],
       gaps: [
-        { z: 23.5, length: 5.3, required: 9, built: false, failed: false },
-        { z: 41.8, length: 6.1, required: 11, built: false, failed: false },
-        { z: 61.7, length: 7.1, required: 14, built: false, failed: false },
-        { z: 84.5, length: 5.8, required: 12, built: false, failed: false },
+        { z: 23.5, length: 5.3, required: 9, placed: 0, placedAt: [], built: false, failed: false },
+        { z: 41.8, length: 6.1, required: 11, placed: 0, placedAt: [], built: false, failed: false },
+        { z: 61.7, length: 7.1, required: 14, placed: 0, placedAt: [], built: false, failed: false },
+        { z: 84.5, length: 5.8, required: 12, placed: 0, placedAt: [], built: false, failed: false },
       ],
     };
   }
@@ -103,7 +103,7 @@
     state.level = makeLevel();
     state.particles = [];
     state.message = "";
-    overlay.classList.add("hidden");
+    ui.hideOverlay();
     updateHud();
   }
 
@@ -310,6 +310,8 @@
       z = next;
     }
 
+    drawTrackMotion(gaps, start, end);
+
     for (const gap of gaps) {
       if (gap.z + gap.length < state.cameraZ || gap.z > state.cameraZ + 68) continue;
       drawGap(gap);
@@ -320,21 +322,115 @@
     return gaps.some((gap) => z > gap.z && z < gap.z + gap.length && !gap.built);
   }
 
+  function drawTrackMotion(gaps, start, end) {
+    const tile = 2.35;
+    const first = Math.floor(start / tile) * tile;
+
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let z = first; z < end; z += tile) {
+      if (z < start || isOpenGap(z, gaps)) continue;
+
+      const p = screenPoint(0, z);
+      const w = roadWidth(z);
+      const near = clamp(p.s * 1.45, 0, 1);
+      const seamAlpha = 0.11 + near * 0.24;
+
+      ctx.globalAlpha = seamAlpha;
+      ctx.strokeStyle = "#a99f94";
+      ctx.lineWidth = Math.max(0.7, 1.6 * p.s);
+      ctx.beginPath();
+      ctx.moveTo(p.x - w * 0.78, p.y + 1.5 * p.s);
+      ctx.lineTo(p.x + w * 0.78, p.y + 1.5 * p.s);
+      ctx.stroke();
+
+      if (near > 0.28) {
+        ctx.globalAlpha = 0.09 + near * 0.18;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = Math.max(1, 2.2 * p.s);
+        ctx.beginPath();
+        ctx.moveTo(p.x - w * 0.58, p.y - 1.2 * p.s);
+        ctx.lineTo(p.x + w * 0.58, p.y - 1.2 * p.s);
+        ctx.stroke();
+      }
+    }
+
+    for (let i = 0; i < 18; i += 1) {
+      const z1 = state.cameraZ + 1.2 + i * 3.15;
+      const z2 = z1 + 1.55;
+      if (z2 > end || isOpenGap((z1 + z2) * 0.5, gaps)) continue;
+
+      const p1 = screenPoint(0, z1);
+      const p2 = screenPoint(0, z2);
+      const w1 = roadWidth(z1);
+      const w2 = roadWidth(z2);
+      const alpha = clamp(p1.s * 0.52, 0.06, 0.28);
+
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = i % 2 ? "#d8d1c8" : "#ffffff";
+      ctx.lineWidth = Math.max(1, 2.4 * p1.s);
+      ctx.beginPath();
+      ctx.moveTo(p1.x - w1 * 0.9, p1.y + 2 * p1.s);
+      ctx.lineTo(p2.x - w2 * 0.74, p2.y + 2 * p2.s);
+      ctx.moveTo(p1.x + w1 * 0.9, p1.y + 2 * p1.s);
+      ctx.lineTo(p2.x + w2 * 0.74, p2.y + 2 * p2.s);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
   function drawRoadSlice(z1, z2) {
     const p1 = screenPoint(0, z1);
     const p2 = screenPoint(0, z2);
     const w1 = roadWidth(z1);
     const w2 = roadWidth(z2);
-    ctx.fillStyle = COLORS.roadSide;
+
+    const drop1 = 22 * p1.s;
+    const drop2 = 28 * p2.s;
+    const top = ctx.createLinearGradient(0, p2.y, 0, p1.y);
+    top.addColorStop(0, "#ffffff");
+    top.addColorStop(0.5, COLORS.roadTop);
+    top.addColorStop(1, "#ddd5cb");
+    const leftSide = ctx.createLinearGradient(p1.x - w1, p1.y, p1.x, p1.y + drop1);
+    leftSide.addColorStop(0, "#d7cabc");
+    leftSide.addColorStop(1, COLORS.roadUnderside);
+    const rightSide = ctx.createLinearGradient(p1.x + w1, p1.y, p1.x, p1.y + drop1);
+    rightSide.addColorStop(0, "#cbbbaa");
+    rightSide.addColorStop(1, "#756a61");
+
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#315f77";
     ctx.beginPath();
-    ctx.moveTo(p1.x - w1, p1.y + 10 * p1.s);
-    ctx.lineTo(p1.x + w1, p1.y + 10 * p1.s);
-    ctx.lineTo(p2.x + w2, p2.y + 12 * p2.s);
-    ctx.lineTo(p2.x - w2, p2.y + 12 * p2.s);
+    ctx.moveTo(p1.x - w1 * 1.05, p1.y + drop1 + 9 * p1.s);
+    ctx.lineTo(p1.x + w1 * 1.05, p1.y + drop1 + 9 * p1.s);
+    ctx.lineTo(p2.x + w2 * 1.1, p2.y + drop2 + 12 * p2.s);
+    ctx.lineTo(p2.x - w2 * 1.1, p2.y + drop2 + 12 * p2.s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = leftSide;
+    ctx.beginPath();
+    ctx.moveTo(p1.x - w1, p1.y);
+    ctx.lineTo(p2.x - w2, p2.y);
+    ctx.lineTo(p2.x - w2, p2.y + drop2);
+    ctx.lineTo(p1.x - w1, p1.y + drop1);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = COLORS.roadTop;
+    ctx.fillStyle = rightSide;
+    ctx.beginPath();
+    ctx.moveTo(p1.x + w1, p1.y);
+    ctx.lineTo(p2.x + w2, p2.y);
+    ctx.lineTo(p2.x + w2, p2.y + drop2);
+    ctx.lineTo(p1.x + w1, p1.y + drop1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = top;
     ctx.beginPath();
     ctx.moveTo(p1.x - w1, p1.y);
     ctx.lineTo(p1.x + w1, p1.y);
@@ -353,9 +449,9 @@
     ctx.stroke();
 
     ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.strokeStyle = "#9d745e";
-    ctx.lineWidth = Math.max(0.6, 1.1 * p1.s);
+    ctx.globalAlpha = 0.24;
+    ctx.strokeStyle = COLORS.roadLine;
+    ctx.lineWidth = Math.max(0.7, 1.25 * p1.s);
     ctx.beginPath();
     ctx.moveTo(p1.x - w1 * 0.42, p1.y + 1 * p1.s);
     ctx.lineTo(p2.x - w2 * 0.42, p2.y + 1 * p2.s);
@@ -366,23 +462,127 @@
 
     if (Math.floor(z1 * 1.4) % 4 === 0) {
       ctx.save();
-      ctx.globalAlpha = 0.22;
-      ctx.strokeStyle = "#b48c72";
-      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.36;
+      ctx.strokeStyle = "#bdb1a5";
+      ctx.lineWidth = Math.max(0.7, 1.15 * p1.s);
       ctx.beginPath();
       ctx.moveTo(p1.x - w1 * 0.68, p1.y + 2 * p1.s);
       ctx.lineTo(p1.x + w1 * 0.68, p1.y + 2 * p1.s);
       ctx.stroke();
       ctx.restore();
     }
+
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = "#fff8e9";
+    ctx.lineWidth = Math.max(0.8, 1.4 * p1.s);
+    ctx.beginPath();
+    ctx.moveTo(p1.x - w1 * 0.86, p1.y + 2 * p1.s);
+    ctx.lineTo(p2.x - w2 * 0.86, p2.y + 2 * p2.s);
+    ctx.moveTo(p1.x + w1 * 0.86, p1.y + 2 * p1.s);
+    ctx.lineTo(p2.x + w2 * 0.86, p2.y + 2 * p2.s);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawGap(gap) {
-    const pieces = gap.built ? gap.required : Math.max(1, Math.floor(gap.required * buildProgress(gap)));
+    if (!gap.built) drawGapVoid(gap);
+    const pieces = gap.built ? gap.required : gap.placed;
     for (let i = 0; i < pieces; i += 1) {
       const z = gap.z + 0.34 + (i / gap.required) * (gap.length - 0.55);
-      drawBridgePlank(0, z);
+      const age = state.time - (gap.placedAt[i] || 0);
+      const lift = clamp(1 - age * 3.6, 0, 1) * 0.68;
+      drawBridgePlank(0, z, lift);
     }
+  }
+
+  function drawGapVoid(gap) {
+    const near = screenPoint(0, gap.z);
+    const far = screenPoint(0, gap.z + gap.length);
+    const nearW = roadWidth(gap.z);
+    const farW = roadWidth(gap.z + gap.length);
+
+    ctx.save();
+    ctx.globalAlpha = 0.26;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.ellipse(near.x, near.y + 42 * near.s, nearW * 0.72, 16 * near.s, 0, 0, Math.PI * 2);
+    ctx.ellipse(far.x, far.y + 22 * far.s, farW * 0.8, 12 * far.s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(90, 69, 52, 0.34)";
+    ctx.lineWidth = Math.max(1, 3 * near.s);
+    ctx.beginPath();
+    ctx.moveTo(near.x - nearW, near.y);
+    ctx.lineTo(near.x + nearW, near.y);
+    ctx.moveTo(far.x - farW, far.y);
+    ctx.lineTo(far.x + farW, far.y);
+    ctx.stroke();
+
+    drawBridgeRope(gap, -0.62);
+    drawBridgeRope(gap, 0.62);
+
+    ctx.fillStyle = "#76502e";
+    for (const z of [gap.z, gap.z + gap.length]) {
+      for (const x of [-0.62, 0.62]) {
+        const p = screenPoint(x, z, -4);
+        const r = Math.max(2.6, 8.5 * p.s);
+        ctx.fillStyle = "#76502e";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 226, 171, 0.5)";
+        ctx.lineWidth = Math.max(1, 1.4 * p.s);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawBridgeRope(gap, x) {
+    const a = screenPoint(x, gap.z, -3);
+    const b = screenPoint(x, gap.z + gap.length, -3);
+    const midX = (a.x + b.x) * 0.5;
+    const midY = (a.y + b.y) * 0.5 + 24 * a.s;
+
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(47, 31, 20, 0.36)";
+    ctx.lineWidth = Math.max(3, 8 * a.s);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y + 3 * a.s);
+    ctx.quadraticCurveTo(midX, midY + 4 * a.s, b.x, b.y + 3 * b.s);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(104, 62, 26, 0.95)";
+    ctx.lineWidth = Math.max(2.1, 5.4 * a.s);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.quadraticCurveTo(midX, midY, b.x, b.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(245, 187, 98, 0.9)";
+    ctx.lineWidth = Math.max(1, 2.1 * a.s);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y - 1.4 * a.s);
+    ctx.quadraticCurveTo(midX, midY - 1.4 * a.s, b.x, b.y - 1.4 * b.s);
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.42;
+    ctx.strokeStyle = "#3c2718";
+    ctx.lineWidth = Math.max(0.9, 1.5 * a.s);
+    for (let i = 1; i < 8; i += 1) {
+      const t = i / 8;
+      const x1 = a.x + (b.x - a.x) * t;
+      const y1 = a.y + (b.y - a.y) * t + Math.sin(t * Math.PI) * 24 * a.s;
+      ctx.beginPath();
+      ctx.moveTo(x1 - 4 * a.s, y1 - 2.4 * a.s);
+      ctx.lineTo(x1 + 4 * a.s, y1 + 3.5 * a.s);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function buildProgress(gap) {
@@ -391,13 +591,32 @@
     return clamp((state.player.z - gap.z) / gap.length, 0, 1);
   }
 
-  function drawBridgePlank(x, z) {
-    const p = screenPoint(x, z);
-    const len = 88 * p.s;
-    const thick = 12 * p.s;
-    roundRect(p.x - len / 2, p.y - thick / 2, len, thick, Math.max(2, 4 * p.s), COLORS.wood);
-    ctx.fillStyle = "rgba(90,45,16,0.22)";
-    ctx.fillRect(p.x - len / 2 + 3 * p.s, p.y + thick * 0.18, len - 6 * p.s, thick * 0.18);
+  function drawBridgePlank(x, z, lift = 0) {
+    const p = screenPoint(x, z, lift * 80);
+    const len = 112 * p.s;
+    const thick = 14 * p.s;
+    const squash = 1 + Math.max(0, 0.22 - lift) * 0.35;
+    const g = ctx.createLinearGradient(0, -thick, 0, thick);
+    g.addColorStop(0, COLORS.woodLight);
+    g.addColorStop(0.5, COLORS.wood);
+    g.addColorStop(1, COLORS.woodDark);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.sin(z * 2.7) * 0.13 * clamp(lift * 2.1, 0, 1));
+    ctx.scale(1, squash);
+    ctx.shadowColor = "rgba(74, 36, 12, 0.22)";
+    ctx.shadowBlur = (7 + lift * 16) * p.s;
+    ctx.shadowOffsetY = (5 + lift * 18) * p.s;
+    roundRect(-len / 2, -thick / 2, len, thick, Math.max(2, 5 * p.s), g);
+    ctx.shadowColor = "transparent";
+    ctx.fillStyle = "rgba(92, 45, 18, 0.32)";
+    ctx.fillRect(-len / 2 + 5 * p.s, thick * 0.2, len - 10 * p.s, Math.max(1, thick * 0.16));
+    ctx.fillStyle = "#6b3d1d";
+    ctx.beginPath();
+    ctx.ellipse(-len / 2 + 6 * p.s, 0, 3.5 * p.s, thick * 0.44, 0, 0, Math.PI * 2);
+    ctx.ellipse(len / 2 - 6 * p.s, 0, 3.5 * p.s, thick * 0.44, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   function drawCollectibles() {
@@ -409,14 +628,27 @@
 
   function drawLoosePlank(x, z, lift) {
     const p = screenPoint(x, z, lift * 80);
-    const len = 52 * p.s;
-    const thick = 13 * p.s;
+    const len = 60 * p.s;
+    const thick = 15 * p.s;
+    const g = ctx.createLinearGradient(0, -thick / 2, 0, thick / 2);
+    g.addColorStop(0, COLORS.woodLight);
+    g.addColorStop(0.52, COLORS.wood);
+    g.addColorStop(1, COLORS.woodDark);
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.rotate(-0.2);
-    roundRect(-len / 2, -thick / 2, len, thick, Math.max(2, 5 * p.s), COLORS.wood);
-    ctx.fillStyle = "rgba(255,244,201,0.34)";
-    ctx.fillRect(-len * 0.32, -thick * 0.3, len * 0.42, Math.max(1, 2 * p.s));
+    ctx.rotate(-0.28);
+    ctx.shadowColor = "rgba(57, 34, 19, 0.24)";
+    ctx.shadowBlur = 8 * p.s;
+    ctx.shadowOffsetY = 4 * p.s;
+    roundRect(-len / 2, -thick / 2, len, thick, Math.max(2, 6 * p.s), g);
+    ctx.shadowColor = "transparent";
+    ctx.fillStyle = "rgba(255,244,201,0.42)";
+    ctx.fillRect(-len * 0.34, -thick * 0.32, len * 0.46, Math.max(1, 2 * p.s));
+    ctx.fillStyle = "#6b3d1d";
+    ctx.beginPath();
+    ctx.ellipse(-len / 2 + 4 * p.s, 0, 4 * p.s, thick * 0.38, 0, 0, Math.PI * 2);
+    ctx.ellipse(len / 2 - 4 * p.s, 0, 4 * p.s, thick * 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -430,19 +662,53 @@
 
   function drawGatePanel(option, z, used) {
     const p = screenPoint(option.x, z, 58);
-    const w = 74 * p.s;
-    const h = 92 * p.s;
+    const w = 84 * p.s;
+    const h = 106 * p.s;
     const isBad = option.value < 0;
+    const baseColor = isBad ? COLORS.gateBad : option.op === "mul" ? COLORS.gateGreat : COLORS.gateGood;
+    const glass = ctx.createLinearGradient(p.x - w / 2, p.y - h, p.x + w / 2, p.y);
+    glass.addColorStop(0, isBad ? "rgba(255,145,128,0.82)" : option.op === "mul" ? "rgba(151,120,255,0.86)" : "rgba(100,224,171,0.86)");
+    glass.addColorStop(0.52, baseColor);
+    glass.addColorStop(1, isBad ? "rgba(160,46,52,0.84)" : option.op === "mul" ? "rgba(77,57,173,0.88)" : "rgba(32,137,99,0.88)");
     ctx.save();
     ctx.globalAlpha = used ? 0.28 : 0.9;
-    ctx.fillStyle = isBad ? COLORS.gateBad : option.op === "mul" ? COLORS.gateGreat : COLORS.gateGood;
-    ctx.strokeStyle = "rgba(255,255,255,0.78)";
-    ctx.lineWidth = Math.max(1, 2 * p.s);
+
+    ctx.fillStyle = "rgba(26, 53, 74, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 8 * p.s, w * 0.62, 8 * p.s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(226, 255, 255, 0.82)";
+    ctx.lineWidth = Math.max(2, 4 * p.s);
+    ctx.beginPath();
+    ctx.moveTo(p.x - w / 2 - 5 * p.s, p.y);
+    ctx.lineTo(p.x - w / 2 - 5 * p.s, p.y - h - 9 * p.s);
+    ctx.moveTo(p.x + w / 2 + 5 * p.s, p.y);
+    ctx.lineTo(p.x + w / 2 + 5 * p.s, p.y - h - 9 * p.s);
+    ctx.stroke();
+
+    ctx.fillStyle = glass;
+    ctx.strokeStyle = "rgba(255,255,255,0.88)";
+    ctx.lineWidth = Math.max(1, 2.4 * p.s);
     roundedPath(p.x - w / 2, p.y - h, w, h, Math.max(4, 8 * p.s));
     ctx.fill();
     ctx.stroke();
+
+    ctx.globalAlpha = used ? 0.18 : 0.34;
     ctx.fillStyle = "#ffffff";
-    ctx.font = `900 ${Math.max(12, 28 * p.s)}px system-ui, sans-serif`;
+    ctx.beginPath();
+    ctx.moveTo(p.x - w * 0.42, p.y - h * 0.92);
+    ctx.lineTo(p.x - w * 0.14, p.y - h * 0.92);
+    ctx.lineTo(p.x + w * 0.36, p.y - h * 0.14);
+    ctx.lineTo(p.x + w * 0.12, p.y - h * 0.14);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = used ? 0.28 : 0.95;
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(0,0,0,0.24)";
+    ctx.shadowBlur = 4 * p.s;
+    ctx.font = `900 ${Math.max(13, 31 * p.s)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(option.label, p.x, p.y - h * 0.48);
@@ -455,6 +721,8 @@
     const p = screenPoint(0, z, 54);
     const r = 48 * p.s;
     ctx.save();
+    ctx.shadowColor = "rgba(138, 87, 15, 0.28)";
+    ctx.shadowBlur = 14 * p.s;
     ctx.fillStyle = "#f4ba3a";
     ctx.strokeStyle = "#a86817";
     ctx.lineWidth = Math.max(2, 5 * p.s);
@@ -462,6 +730,16 @@
     ctx.arc(p.x, p.y - r * 0.3, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "rgba(255, 246, 170, 0.9)";
+    ctx.lineWidth = Math.max(1, 3 * p.s);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - r * 0.3, r * 0.76, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.54)";
+    ctx.beginPath();
+    ctx.ellipse(p.x - r * 0.28, p.y - r * 0.68, r * 0.18, r * 0.08, -0.6, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#fff3a0";
     ctx.font = `900 ${Math.max(11, 21 * p.s)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
@@ -474,15 +752,34 @@
     const p = screenPoint(state.player.x, state.player.z, 34 + Math.sin(state.time * 11) * 3);
     const s = Math.max(0.52, p.s * 1.35);
     const stack = Math.min(state.planks, 28);
-    for (let i = 0; i < stack; i += 1) {
-      const yy = p.y - 43 * s - i * 4.1 * s;
-      roundRect(p.x - 28 * s, yy, 56 * s, 5.5 * s, 2 * s, i % 2 ? "#b86732" : COLORS.wood);
-    }
 
     ctx.fillStyle = "rgba(42,55,42,0.18)";
     ctx.beginPath();
     ctx.ellipse(p.x, p.y + 27 * s, 25 * s, 7 * s, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    for (let i = 0; i < stack; i += 1) {
+      const yy = p.y - 43 * s - i * 4.1 * s;
+      const width = 58 * s + Math.sin(i * 0.8) * 2 * s;
+      const g = ctx.createLinearGradient(0, yy, 0, yy + 7 * s);
+      g.addColorStop(0, COLORS.woodLight);
+      g.addColorStop(0.55, i % 2 ? "#b86732" : COLORS.wood);
+      g.addColorStop(1, COLORS.woodDark);
+      roundRect(p.x - width / 2, yy, width, 6.5 * s, 2.5 * s, g);
+      ctx.fillStyle = "rgba(255, 235, 189, 0.28)";
+      ctx.fillRect(p.x - width * 0.34, yy + 1.3 * s, width * 0.36, Math.max(1, 1.1 * s));
+    }
+
+    if (state.planks > 12) {
+      ctx.save();
+      ctx.fillStyle = "rgba(64, 35, 17, 0.92)";
+      ctx.font = `900 ${Math.max(10, 13 * s)}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      roundRect(p.x + 25 * s, p.y - 47 * s - stack * 4.1 * s, 28 * s, 18 * s, 9 * s, "rgba(255, 241, 206, 0.92)");
+      ctx.fillText(String(Math.floor(state.planks)), p.x + 39 * s, p.y - 38 * s - stack * 4.1 * s);
+      ctx.restore();
+    }
 
     ctx.fillStyle = COLORS.skin;
     ctx.beginPath();
@@ -570,13 +867,26 @@
   function handleGaps() {
     for (const gap of state.level.gaps) {
       if (gap.built || gap.failed || state.player.z < gap.z) continue;
-      if (state.planks >= gap.required) {
-        state.planks -= gap.required;
+
+      const progress = buildProgress(gap);
+      const targetPlaced = Math.min(gap.required, Math.ceil(progress * gap.required));
+
+      while (gap.placed < targetPlaced) {
+        if (state.planks <= 0) {
+          gap.failed = true;
+          endGame(false, "木板不够");
+          return;
+        }
+
+        state.planks -= 1;
+        gap.placed += 1;
+        gap.placedAt.push(state.time);
+        addPlankSnap(gap, gap.placed - 1);
+        addBurst(COLORS.wood);
+      }
+
+      if (gap.placed >= gap.required && state.player.z >= gap.z + gap.length) {
         gap.built = true;
-        addFloatingText(`-${gap.required}`, COLORS.wood);
-      } else {
-        gap.failed = true;
-        endGame(false, "木板不够");
       }
     }
   }
@@ -603,6 +913,23 @@
         color,
         life: 0.45 + Math.random() * 0.25,
         max: 0.7,
+      });
+    }
+  }
+
+  function addPlankSnap(gap, index) {
+    const z = gap.z + 0.34 + (index / gap.required) * (gap.length - 0.55);
+    const p = screenPoint(0, z, 8);
+    for (let i = 0; i < 7; i += 1) {
+      state.particles.push({
+        x: p.x + (Math.random() - 0.5) * 62 * p.s,
+        y: p.y + (Math.random() - 0.5) * 12 * p.s,
+        vx: (Math.random() - 0.5) * 92,
+        vy: -28 - Math.random() * 56,
+        r: (2.2 + Math.random() * 2.4) * Math.max(0.7, p.s),
+        color: i % 2 ? COLORS.woodLight : "rgba(255, 238, 202, 0.92)",
+        life: 0.32 + Math.random() * 0.16,
+        max: 0.46,
       });
     }
   }
@@ -640,13 +967,13 @@
     state.status = won ? "won" : "lost";
     state.message = message;
     updateHud();
-    overlay.classList.remove("hidden");
-    panel.innerHTML = `
+    ui.showOverlay();
+    ui.setPanel(`
       <p class="kicker">${won ? "挑战完成" : "再试一次"}</p>
       <h1>${message}</h1>
       <p class="hint">${won ? `金币 +${50 + state.planks * 2}，剩余木板 ${state.planks}` : "多收集木板，优先选择加成更高的门。"}</p>
       <button id="primaryButton" type="button">${won ? "再玩一局" : "重新开始"}</button>
-    `;
+    `);
     panel.querySelector("button").addEventListener("click", resetGame);
   }
 

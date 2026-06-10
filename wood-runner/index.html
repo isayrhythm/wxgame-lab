@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>木板冲刺</title>
+    <link rel="stylesheet" href="./style.css?v=2026061003" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="木板冲刺小游戏">
+      <canvas id="gameCanvas" aria-label="游戏画面"></canvas>
+
+      <section class="hud" aria-live="polite">
+        <div class="score-pill plank-pill">
+          <span class="score-icon">▰</span>
+          <span id="plankCount">0</span>
+        </div>
+        <div class="score-pill coin-pill">
+          <span class="coin-dot"></span>
+          <span id="coinCount">0</span>
+        </div>
+      </section>
+
+      <section id="overlay" class="overlay">
+        <div class="panel">
+          <p class="kicker">手机跑酷小游戏</p>
+          <h1>木板冲刺</h1>
+          <p class="hint">拖动角色左右移动，收集木板，选择倍率门，遇到断桥会自动铺路。</p>
+          <button id="primaryButton" type="button">开始挑战</button>
+        </div>
+      </section>
+    </main>
+    <script src="./game.js?v=2026061003"></script>
+  </body>
+</html>

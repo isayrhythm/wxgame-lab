@@ -1,0 +1,205 @@
+:root {
+  color-scheme: light;
+  --ink: #18251f;
+  --muted: #5a6b62;
+  --card: rgba(255, 255, 255, 0.88);
+  --line: rgba(255, 255, 255, 0.78);
+  --shadow: rgba(20, 44, 36, 0.22);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.7), transparent 24%),
+    linear-gradient(150deg, #a4dfd3 0%, #d5eed0 52%, #f5d28b 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.portal {
+  width: min(100%, 480px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 24px) 18px calc(env(safe-area-inset-bottom) + 24px);
+}
+
+.topbar {
+  padding: 16px 2px 22px;
+}
+
+.topbar p {
+  margin: 0 0 8px;
+  color: #37664a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.game-list {
+  display: grid;
+  gap: 16px;
+}
+
+.game-card {
+  display: grid;
+  grid-template-rows: 178px auto;
+  min-height: 274px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 22px 48px var(--shadow);
+}
+
+.scene {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.copy {
+  display: grid;
+  gap: 6px;
+  padding: 17px 18px 18px;
+}
+
+.copy strong {
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.copy small {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.wood .scene {
+  background:
+    radial-gradient(circle at 20% 50%, #4e916a 0 16%, transparent 17%),
+    radial-gradient(circle at 76% 38%, #42815d 0 19%, transparent 20%),
+    linear-gradient(180deg, #9bd7d1 0%, #bfe7c2 58%, #9baa77 100%);
+}
+
+.wood .track {
+  position: absolute;
+  left: 36%;
+  bottom: -18px;
+  width: 34%;
+  height: 190px;
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, #edf3ee, #aebcb3);
+}
+
+.wood .runner {
+  position: absolute;
+  left: 48%;
+  bottom: 28px;
+  width: 22px;
+  height: 38px;
+  border-radius: 12px 12px 6px 6px;
+  background: #31a66c;
+  box-shadow: 0 -15px 0 -4px #d69a68, 0 -22px 0 -8px #2e342d;
+}
+
+.wood .planks {
+  position: absolute;
+  left: 53%;
+  top: 50px;
+  width: 46px;
+  height: 10px;
+  border-radius: 8px;
+  background: #bd7136;
+  box-shadow: -18px 26px 0 #c67b3e, 10px 52px 0 #aa622e, -26px 79px 0 #c67b3e;
+  transform: rotate(-10deg);
+}
+
+.shooter .scene {
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.5), transparent 20%),
+    linear-gradient(180deg, #c6e7ef 0%, #e2f2e0 64%, #b9ca92 100%);
+}
+
+.monster-cloud {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 148px;
+  height: 62px;
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at 20% 50%, #6d4aa8 0 18%, transparent 19%),
+    radial-gradient(circle at 39% 42%, #31966e 0 17%, transparent 18%),
+    radial-gradient(circle at 58% 54%, #c65372 0 18%, transparent 19%),
+    radial-gradient(circle at 78% 44%, #5775c9 0 18%, transparent 19%);
+  transform: translateX(-50%);
+}
+
+.monster-cloud::after {
+  content: "BUGS";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: #fff;
+  font-weight: 900;
+  transform: translate(-50%, -50%);
+}
+
+.gate {
+  position: absolute;
+  top: 78px;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 900;
+}
+
+.gate.left {
+  left: 42px;
+  background: #6355d7;
+}
+
+.gate.right {
+  right: 42px;
+  background: #38b978;
+}
+
+.squad {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  font-size: 32px;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 360px) {
+  .portal {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .game-card {
+    grid-template-rows: 158px auto;
+  }
+}

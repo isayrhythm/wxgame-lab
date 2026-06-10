@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>企鹅打枪</title>
+    <link rel="stylesheet" href="./style.css?v=2026061004" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="企鹅打枪小游戏">
+      <canvas id="gameCanvas" aria-label="游戏画面"></canvas>
+
+      <a class="home-link" href="../" aria-label="返回小游戏大厅">‹</a>
+      <button id="pauseButton" class="pause-button" type="button" aria-label="暂停">Ⅱ</button>
+
+      <section class="hud" aria-live="polite">
+        <div class="pill monster-pill">
+          <span class="monster-dot"></span>
+          <span id="monsterCount">0</span>
+        </div>
+        <div class="pill squad-pill">
+          <span class="squad-dot"></span>
+          <span id="squadCount">2</span>
+        </div>
+      </section>
+
+      <section id="overlay" class="overlay">
+        <div class="panel">
+          <p class="kicker">企鹅小队射击跑酷</p>
+          <h1>企鹅打枪</h1>
+          <p class="hint">战斗和补给交替出现。拖动企鹅小队，吃武器箱或人数门，最后击败夜鹭 Boss。</p>
+          <button id="primaryButton" type="button">开始开火</button>
+        </div>
+      </section>
+    </main>
+    <script src="./game.js?v=2026061007"></script>
+  </body>
+</html>

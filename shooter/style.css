@@ -60,7 +60,7 @@ button {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 12px);
   left: 14px;
-  z-index: 3;
+  z-index: 6;
   display: grid;
   place-items: center;
   width: 38px;
@@ -74,6 +74,8 @@ button {
   font-weight: 800;
   line-height: 1;
   text-decoration: none;
+  pointer-events: auto;
+  touch-action: manipulation;
   backdrop-filter: blur(10px);
 }
 
@@ -81,7 +83,7 @@ button {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 12px);
   right: 14px;
-  z-index: 3;
+  z-index: 6;
   display: grid;
   place-items: center;
   width: 38px;
@@ -94,6 +96,8 @@ button {
   font-size: 18px;
   font-weight: 900;
   line-height: 1;
+  pointer-events: auto;
+  touch-action: manipulation;
   backdrop-filter: blur(10px);
 }
 

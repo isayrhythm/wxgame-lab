@@ -15,6 +15,9 @@
   const catSupplyImage = new Image();
   catSupplyImage.src = "./assets/winking-cat.jpg";
 
+  const heronBossImage = new Image();
+  heronBossImage.src = "./assets/night-heron-boss.png";
+
   const levelConfigs = [
     { name: "云端虫潮", miniBoss: "毒虫王", boss: "夜鹭", hpScale: 1, countScale: 1, rewardPool: ["shotgun", "laser", "cat"] },
     { name: "白塔虫巢", miniBoss: "甲壳虫", boss: "机械夜鹭", hpScale: 1.35, countScale: 1.18, rewardPool: ["laser", "rocket", "cat"] },
@@ -252,11 +255,13 @@
       type: "heron",
       bossKind: level.boss,
       x: state.width * 0.5,
-      y: 48,
+      y: 88,
       hp,
       maxHp: hp,
       phase: 0,
       bossStage: 0,
+      facing: 1,
+      lastX: state.width * 0.5,
     }];
     state.gates = [];
     state.supplies = [];
@@ -303,15 +308,15 @@
     state.supplies = [];
 
     if (rewardIndex % 2 === 1) {
-      const rows = 2 + Math.min(1, state.levelIndex);
+      const rows = 2;
       for (let row = 0; row < rows; row += 1) {
-        state.gates.push(makeGate(y - row * 132, ...gateChoices(rewardIndex + row)));
+        state.gates.push(makeGate(y - row * 190, ...gateChoices(rewardIndex + row)));
       }
       if (announce) addText(state.width * 0.5, 108, "Gate Rush", colors.green);
     } else {
       const pool = level.rewardPool;
       for (let row = 0; row < 3; row += 1) {
-        const rowY = y - row * 124;
+        const rowY = y - row * 170;
         if (row === 1) {
           state.gates.push(makeGate(rowY, ...gateChoices(rewardIndex + row)));
           continue;
@@ -471,22 +476,14 @@
         enemy.phase += dt;
         const ratio = enemy.hp / enemy.maxHp;
         enemy.y += (20 + state.levelIndex * 1.6 + (ratio < 0.4 ? 10 : 0) + enemy.bossStage * 2.8) * dt;
-        enemy.x = state.width * 0.5 + Math.sin(enemy.phase * (1.8 + state.levelIndex * 0.18 + enemy.bossStage * 0.22)) * Math.min(108 + enemy.bossStage * 12, state.width * 0.34);
+        const nextX = state.width * 0.5 + Math.sin(enemy.phase * (1.8 + state.levelIndex * 0.18 + enemy.bossStage * 0.22)) * Math.min(108 + enemy.bossStage * 12, state.width * 0.34);
+        if (Math.abs(nextX - enemy.x) > 0.4) enemy.facing = nextX < enemy.x ? 1 : -1;
+        enemy.lastX = enemy.x;
+        enemy.x = nextX;
       }
     }
 
-    const reached = state.enemies.filter((enemy) => enemy.y > attackLine);
-    if (reached.length > 0) {
-      const boss = reached.find((enemy) => enemy.type === "heron");
-      const loss = boss ? 16 * dt : Math.max(1, Math.ceil(reached.length * (1 + state.wave * 0.08)));
-      state.squad -= loss;
-      if (!boss) {
-        state.enemies = state.enemies.filter((enemy) => enemy.y <= attackLine + 24);
-        state.waveHp = Math.max(0, state.waveHp - reached.reduce((sum, enemy) => sum + enemy.hp, 0));
-      }
-      addText(state.width * 0.5, attackLine - 18, `-${Math.ceil(loss)}`, colors.red);
-      if (state.squad <= 0) endGame(false, "Squad Down");
-    }
+    handleEnemyBreakthroughs(attackLine, dt);
 
     if (state.enemies.length === 0 && state.status === "playing") {
       if (state.phase === "boss") {
@@ -504,6 +501,52 @@
       else if (state.levelStep === 2) state.levelStep = 3;
       spawnRewardSegment();
     }
+  }
+
+  function handleEnemyBreakthroughs(attackLine, dt) {
+    const breached = state.enemies.filter((enemy) => enemy.y > attackLine);
+    if (breached.length === 0) return;
+
+    let loss = 0;
+    const escaped = new Set();
+
+    for (const enemy of breached) {
+      if (enemy.type === "bug") {
+        loss += enemy.elite ? 2 : 1;
+        escaped.add(enemy);
+        addSpark(enemy.x, attackLine, colors.red, enemy.elite ? 8 : 4);
+      } else if (enemy.type === "miniBoss") {
+        loss += 8 + state.levelIndex * 2;
+        escaped.add(enemy);
+        addSpark(enemy.x, attackLine, colors.red, 18);
+      } else if (enemy.type === "heron") {
+        const drain = (6 + state.levelIndex * 1.5 + (enemy.bossStage || 0) * 1.5) * dt;
+        loss += drain;
+        enemy.y = Math.min(enemy.y, attackLine + 4);
+        enemy.bumpTextTimer = (enemy.bumpTextTimer || 0) - dt;
+        if (enemy.bumpTextTimer <= 0) {
+          addSpark(enemy.x, attackLine, colors.red, 12);
+          addText(state.width * 0.5, attackLine - 22, `-${Math.ceil(drain * 8)}`, colors.red);
+          enemy.bumpTextTimer = 0.45;
+        }
+      }
+    }
+
+    if (loss <= 0) return;
+
+    state.squad -= loss;
+    if (escaped.size > 0) {
+      const escapedHp = [...escaped].reduce((sum, enemy) => sum + enemy.hp, 0);
+      state.waveHp = Math.max(0, state.waveHp - escapedHp);
+      state.enemies = state.enemies.filter((enemy) => !escaped.has(enemy));
+    }
+
+    const visibleLoss = Math.max(1, Math.ceil(loss));
+    if (!breached.some((enemy) => enemy.type === "heron")) {
+      addText(state.width * 0.5, attackLine - 18, `-${visibleLoss}`, colors.red);
+    }
+
+    if (state.squad <= 0) endGame(false, "Squad Down");
   }
 
   function updateBullets(dt) {
@@ -591,11 +634,10 @@
 
   function updateBossStage(enemy) {
     const ratio = enemy.hp / enemy.maxHp;
-    const nextStage = ratio <= 0.15 ? 3 : ratio <= 0.4 ? 2 : ratio <= 0.7 ? 1 : 0;
-    const labels = ["", "羽刃阶段", "狂风阶段", "濒死暴走"];
+    const nextStage = ratio <= 0.3 ? 2 : ratio <= 0.7 ? 1 : 0;
     for (let stage = (enemy.bossStage || 0) + 1; stage <= nextStage; stage += 1) {
       enemy.bossStage = stage;
-      addText(state.width * 0.5, 118, labels[stage], colors.red);
+      addText(state.width * 0.5, 118, "别的鸟做得到吗？", colors.red);
       addSpark(enemy.x, enemy.y, colors.red, 18 + stage * 8);
       spawnBossMinions(enemy, stage);
     }
@@ -1167,61 +1209,82 @@
     for (const gate of state.gates) {
       const y = worldY(gate.y);
       if (y < -80 || y > state.height + 80) continue;
-      drawGate(gate.left, y, gate.used);
-      drawGate(gate.right, y, gate.used);
+      drawGate(gate, y);
     }
   }
 
-  function drawGate(option, y, used) {
-    const x = laneX(option.x);
-    const w = Math.min(128, state.width * 0.3);
-    const h = 78;
-    const color = option.value < 0 ? colors.red : option.op === "mul" ? colors.violet : colors.green;
-    const pulse = 0.72 + Math.sin(state.time * 6 + x * 0.01) * 0.12;
+  function drawGate(gate, y) {
+    const used = gate.used;
+    const h = 76;
+    const left = gate.left;
+    const right = gate.right;
+    const leftX = laneX(left.x);
+    const rightX = laneX(right.x);
+    const halfWidth = Math.min(214, state.width * 0.46);
+    const leftEdge = state.width * 0.5 - halfWidth;
+    const rightEdge = state.width * 0.5 + halfWidth;
+    const centerX = (leftX + rightX) / 2;
+    const leftColor = gateColor(left);
+    const rightColor = gateColor(right);
     ctx.save();
 
     ctx.globalAlpha = used ? 0.22 : 1;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = used ? 0 : 18;
+    drawGatePanel(leftEdge + 7, centerX - 6, y, h, leftColor, left.label, leftX, used);
+    drawGatePanel(centerX + 6, rightEdge - 7, y, h, rightColor, right.label, rightX, used);
 
-    const beam = ctx.createLinearGradient(x - w / 2, y, x + w / 2, y);
-    beam.addColorStop(0, "rgba(255,255,255,0.06)");
-    beam.addColorStop(0.18, `${hexToRgba(color, 0.42)}`);
-    beam.addColorStop(0.5, `${hexToRgba(color, 0.18 + pulse * 0.18)}`);
-    beam.addColorStop(0.82, `${hexToRgba(color, 0.42)}`);
-    beam.addColorStop(1, "rgba(255,255,255,0.06)");
-    roundedRect(x - w / 2, y - h / 2 + 9, w, h - 18, 10, beam);
+    ctx.shadowBlur = used ? 0 : 14;
+    drawGatePillar(leftEdge, y, h, leftColor);
+    drawGatePillar(centerX, y, h, "#eaf9ff");
+    drawGatePillar(rightEdge, y, h, rightColor);
 
-    ctx.shadowBlur = 10;
-    ctx.strokeStyle = hexToRgba(color, 0.95);
-    ctx.lineWidth = 2.4;
-    roundedPath(x - w / 2, y - h / 2 + 9, w, h - 18, 10);
-    ctx.stroke();
-
-    ctx.shadowBlur = 14;
-    drawGatePillar(x - w / 2, y, h, color);
-    drawGatePillar(x + w / 2, y, h, color);
-
-    ctx.globalAlpha = used ? 0.16 : 0.42;
+    ctx.save();
+    ctx.globalAlpha = used ? 0.12 : 0.32;
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1;
     for (let i = -2; i <= 2; i += 1) {
-      const yy = y + i * 11 + Math.sin(state.time * 4 + i) * 1.5;
+      const yy = y + i * 10 + Math.sin(state.time * 4 + i) * 1.3;
       ctx.beginPath();
-      ctx.moveTo(x - w / 2 + 10, yy);
-      ctx.lineTo(x + w / 2 - 10, yy);
+      ctx.moveTo(leftEdge + 12, yy);
+      ctx.lineTo(rightEdge - 12, yy);
       ctx.stroke();
     }
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawGatePanel(x1, x2, y, h, color, label, textX, used) {
+    const w = x2 - x1;
+    const pulse = 0.72 + Math.sin(state.time * 6 + textX * 0.01) * 0.12;
+    const beam = ctx.createLinearGradient(x1, y, x2, y);
+    beam.addColorStop(0, "rgba(255,255,255,0.08)");
+    beam.addColorStop(0.24, hexToRgba(color, 0.44));
+    beam.addColorStop(0.5, hexToRgba(color, 0.2 + pulse * 0.16));
+    beam.addColorStop(0.76, hexToRgba(color, 0.44));
+    beam.addColorStop(1, "rgba(255,255,255,0.08)");
+
+    ctx.shadowColor = color;
+    ctx.shadowBlur = used ? 0 : 14;
+    roundedRect(x1, y - h / 2 + 10, w, h - 20, 9, beam);
+
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = hexToRgba(color, 0.9);
+    ctx.lineWidth = 2;
+    roundedPath(x1, y - h / 2 + 10, w, h - 20, 9);
+    ctx.stroke();
 
     ctx.globalAlpha = used ? 0.32 : 1;
     ctx.shadowColor = "#ffffff";
     ctx.shadowBlur = 8;
     ctx.fillStyle = "#fff";
-    ctx.font = "900 26px system-ui, sans-serif";
+    ctx.font = "900 25px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(option.label, x, y);
-    ctx.restore();
+    ctx.fillText(label, textX, y);
+    ctx.globalAlpha = used ? 0.22 : 1;
+  }
+
+  function gateColor(option) {
+    return option.value < 0 ? colors.red : option.op === "mul" ? colors.violet : colors.green;
   }
 
   function drawGatePillar(x, y, h, color) {
@@ -1423,82 +1486,60 @@
   }
 
   function drawNightHeron(enemy) {
-    const flap = Math.sin(state.time * 5) * 0.18;
     const stage = enemy.bossStage || 0;
+    const facing = enemy.facing || 1;
+    const bossScale = 1 + stage * 0.06;
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
-    ctx.scale(1.05 + stage * 0.05, 1.05 + stage * 0.05);
 
     ctx.fillStyle = "rgba(20,30,35,0.18)";
     ctx.beginPath();
-    ctx.ellipse(0, 64, 54, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 84 * bossScale, 62 * bossScale, 13 * bossScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     if (stage > 0) {
       ctx.globalAlpha = 0.18 + stage * 0.08;
       ctx.fillStyle = colors.red;
       ctx.beginPath();
-      ctx.arc(0, 8, 62 + stage * 12, 0, Math.PI * 2);
+      ctx.arc(0, 8, 70 + stage * 16, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
     }
 
+    if (heronBossImage.complete && heronBossImage.naturalWidth > 0) {
+      const imgRatio = heronBossImage.naturalWidth / heronBossImage.naturalHeight;
+      const drawH = (158 + stage * 10) * bossScale;
+      const drawW = drawH * imgRatio;
+      ctx.save();
+      ctx.scale(facing, 1);
+      ctx.drawImage(heronBossImage, -drawW / 2, -66 * bossScale, drawW, drawH);
+      ctx.restore();
+    } else {
+      drawNightHeronFallback(stage, bossScale);
+    }
+
+    drawSmallHp(enemy.hp / enemy.maxHp, -54, -78, 108);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 14px system-ui, \"Microsoft YaHei\", sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(enemy.bossKind || "夜鹭", 0, -82);
+    ctx.restore();
+  }
+
+  function drawNightHeronFallback(stage, bossScale) {
+    ctx.save();
+    ctx.scale(bossScale, bossScale);
     ctx.fillStyle = stage >= 2 ? "#171923" : colors.heronWing;
     ctx.beginPath();
-    ctx.ellipse(-36, 12, 18 + stage * 3, 60 + stage * 8, -0.75 - flap, 0, Math.PI * 2);
-    ctx.ellipse(36, 12, 18 + stage * 3, 60 + stage * 8, 0.75 + flap, 0, Math.PI * 2);
+    ctx.ellipse(-36, 12, 18 + stage * 3, 60 + stage * 8, -0.75, 0, Math.PI * 2);
+    ctx.ellipse(36, 12, 18 + stage * 3, 60 + stage * 8, 0.75, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.fillStyle = colors.heron;
     ctx.beginPath();
     ctx.ellipse(0, 16, 30, 48, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#d8dde2";
-    ctx.beginPath();
-    ctx.ellipse(0, 24, 18, 34, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = colors.heron;
-    ctx.beginPath();
     ctx.arc(0, -36, 19, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.fillStyle = "#eff4f7";
-    ctx.beginPath();
-    ctx.arc(-7, -39, 7, 0, Math.PI * 2);
-    ctx.arc(7, -39, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#141820";
-    ctx.beginPath();
-    ctx.arc(-5, -39, 2.4, 0, Math.PI * 2);
-    ctx.arc(5, -39, 2.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#f0b33d";
-    ctx.beginPath();
-    ctx.moveTo(-8, -29);
-    ctx.lineTo(10, -29);
-    ctx.lineTo(0, -15);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = "#e49335";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-8, 56);
-    ctx.lineTo(-14, 80);
-    ctx.moveTo(8, 56);
-    ctx.lineTo(14, 80);
-    ctx.stroke();
-
-    drawSmallHp(enemy.hp / enemy.maxHp, -48, -76, 96);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "900 14px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(enemy.bossKind || "夜鹭", 0, -88);
     ctx.restore();
   }
 
@@ -1744,7 +1785,7 @@
       ctx.globalAlpha = alpha;
       if (spark.text) {
         ctx.fillStyle = spark.color;
-        ctx.font = "900 28px system-ui, sans-serif";
+        ctx.font = "900 28px system-ui, \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(spark.text, spark.x, spark.y);

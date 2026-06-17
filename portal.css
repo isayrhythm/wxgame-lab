@@ -221,6 +221,73 @@ a {
   transform: translateX(-50%);
 }
 
+.pig-charge .scene {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.45), transparent 22%),
+    linear-gradient(180deg, #efb581 0%, #d9a16f 58%, #9a5c4b 100%);
+}
+
+.pig-road {
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  width: 62%;
+  height: 210px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 28px, rgba(255, 255, 255, 0.22) 29px 31px),
+    #9d8d83;
+  border-left: 8px solid #ad4464;
+  border-right: 8px solid #ad4464;
+  transform: translateX(-50%);
+}
+
+.pig-gate {
+  position: absolute;
+  top: 46px;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 42px;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pig-left {
+  left: 34px;
+  background: #8a58d8;
+}
+
+.pig-right {
+  right: 34px;
+  background: #db6a55;
+}
+
+.pig-pack {
+  position: absolute;
+  left: 50%;
+  bottom: 25px;
+  display: grid;
+  grid-template-columns: repeat(3, 22px);
+  gap: 2px;
+  transform: translateX(-50%);
+}
+
+.pig-pack span {
+  width: 25px;
+  height: 17px;
+  border-radius: 60% 52% 48% 60%;
+  background: #ffa7bf;
+  box-shadow: inset -3px -3px 0 #c46b81;
+}
+
+.pig-pack span:nth-child(2),
+.pig-pack span:nth-child(5) {
+  transform: translateY(-8px);
+}
+
 @media (max-width: 360px) {
   .portal {
     padding-left: 12px;

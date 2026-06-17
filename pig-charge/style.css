@@ -1,0 +1,57 @@
+:root {
+  --ink: #2d2320;
+  --muted: #725f59;
+  --panel: rgba(255, 255, 255, 0.9);
+  --line: rgba(255, 255, 255, 0.78);
+  --shadow: rgba(83, 38, 28, 0.22);
+  --accent: #e36e7b;
+  --kicker: #9d4f38;
+  --overlay-bg: linear-gradient(180deg, rgba(95, 41, 28, 0.08), rgba(63, 36, 25, 0.48));
+  --panel-shadow: rgba(83, 38, 28, 0.28);
+  --shell-bg:
+    radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.54), transparent 24%),
+    linear-gradient(180deg, #efb581 0%, #deb378 34%, #ad6b51 100%);
+}
+
+body {
+  background: #e5a974;
+}
+
+.pill {
+  min-width: 88px;
+}
+
+.monster-pill {
+  left: 64px;
+}
+
+.squad-pill {
+  right: 64px;
+}
+
+.monster-dot,
+.squad-dot {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.monster-dot {
+  background: radial-gradient(circle at 35% 28%, #ffe88a 0 18%, #e7aa28 20% 70%, #9c6817 72%);
+}
+
+.squad-dot {
+  background: radial-gradient(circle at 34% 28%, #ffdbe7 0 18%, #ec8da8 20% 70%, #b95872 72%);
+}
+
+@media (max-width: 360px) {
+  .monster-pill {
+    left: 58px;
+    min-width: 78px;
+  }
+
+  .pill {
+    padding: 0 10px;
+  }
+}

@@ -19,6 +19,14 @@
     { name: "White Tower", miniBoss: "Iron Bug", boss: "Mecha Heron", hpScale: 1.28, countScale: 1.12, rewardPool: ["laser", "rocket", "cat"] },
     { name: "High Hunt", miniBoss: "Bug Captain", boss: "AI Herons", hpScale: 1.62, countScale: 1.26, rewardPool: ["shotgun", "rocket", "cat"] },
     { name: "Final Garden", miniBoss: "Young Heron", boss: "Heron Queen", hpScale: 2, countScale: 1.42, rewardPool: ["laser", "rocket", "cat"] },
+    { name: "Glass Monsoon", miniBoss: "Shard Mantis", boss: "Mirror Heron", hpScale: 2.38, countScale: 1.58, eliteEvery: 16, rewardPool: ["shotgun", "laser", "rocket"] },
+    { name: "Neon Swarmway", miniBoss: "Signal Wasp", boss: "Broadcast Heron", hpScale: 2.78, countScale: 1.74, eliteEvery: 15, speedScale: 1.03, rewardPool: ["laser", "rocket", "cat"] },
+    { name: "Black Nest", miniBoss: "Nest Guard", boss: "Void Heron", hpScale: 3.22, countScale: 1.92, eliteEvery: 14, swarmScale: 1.08, rewardPool: ["shotgun", "rocket", "cat"] },
+    { name: "Dawn Reactor", miniBoss: "Core Beetle", boss: "Solar Heron", hpScale: 3.75, countScale: 2.12, eliteEvery: 13, speedScale: 1.05, swarmScale: 1.12, rewardPool: ["shotgun", "laser", "rocket"] },
+    { name: "Rust Aquarium", miniBoss: "Copper Diver", boss: "Flood Heron", hpScale: 4.25, countScale: 2.28, eliteEvery: 12, speedScale: 1.06, swarmScale: 1.18, rewardPool: ["laser", "rocket", "cat"] },
+    { name: "Static Orchard", miniBoss: "Wire Locust", boss: "Signal Heron", hpScale: 4.85, countScale: 2.46, eliteEvery: 11, speedScale: 1.08, featherBonus: 2, swarmScale: 1.24, rewardPool: ["shotgun", "laser", "cat"] },
+    { name: "Moon Kernel", miniBoss: "Lunar Scarab", boss: "Kernel Heron", hpScale: 5.55, countScale: 2.66, eliteEvery: 10, speedScale: 1.1, featherBonus: 3, swarmScale: 1.32, rewardPool: ["shotgun", "rocket", "cat"] },
+    { name: "Last Compiler", miniBoss: "Patch Titan", boss: "Release Heron", hpScale: 6.35, countScale: 2.9, eliteEvery: 9, speedScale: 1.12, featherBonus: 4, swarmScale: 1.42, rewardPool: ["shotgun", "laser", "rocket"] },
   ];
 
   const colors = {
@@ -31,6 +39,8 @@
     yellow: 0xffd34d,
     white: 0xffffff,
   };
+
+  const maxSquad = 9999;
 
   class ShooterScene extends Phaser.Scene {
     constructor() {
@@ -52,6 +62,7 @@
       this.rewardGroup = this.add.group();
       this.enemyGroup = this.physics.add.group();
       this.bulletGroup = this.physics.add.group();
+      this.enemyBulletGroup = this.physics.add.group();
       this.squadGroup = this.add.group();
       this.fxGroup = this.add.group();
       this.bossBar = this.add.graphics().setDepth(8);
@@ -154,7 +165,7 @@
     }
 
     clearWorld() {
-      for (const group of [this.enemyGroup, this.bulletGroup, this.rewardGroup, this.squadGroup, this.fxGroup]) {
+      for (const group of [this.enemyGroup, this.bulletGroup, this.enemyBulletGroup, this.rewardGroup, this.squadGroup, this.fxGroup]) {
         if (group) group.clear(true, true);
       }
       if (this.bossBar) this.bossBar.clear();
@@ -213,6 +224,14 @@
       g.fillStyle(0xffd34d, 1).fillTriangle(3, 30, 15, 30, 9, 44);
       g.generateTexture("rocket", 18, 46);
 
+      g.clear();
+      g.fillStyle(0xf6f0dd, 1).fillEllipse(9, 18, 12, 34);
+      g.lineStyle(2, 0x7d5b48, 0.9).lineBetween(9, 2, 9, 36);
+      g.lineStyle(1, 0x9c7a62, 0.8);
+      g.lineBetween(9, 13, 3, 8).lineBetween(9, 17, 4, 15).lineBetween(9, 21, 5, 23);
+      g.lineBetween(9, 13, 15, 8).lineBetween(9, 17, 14, 15).lineBetween(9, 21, 13, 23);
+      g.generateTexture("feather", 18, 38);
+
       g.destroy();
     }
 
@@ -265,6 +284,7 @@
       this.updateEnemies(delta);
       this.updateRewards(delta);
       this.updateBullets(delta);
+      this.updateEnemyBullets(delta);
       this.updateSquad();
       this.updateBossBar();
       this.maybeStartReward();
@@ -292,7 +312,7 @@
 
     updateSquad() {
       const totalSquad = Math.max(1, Math.floor(this.state.squad));
-      const visible = Math.min(totalSquad, Math.max(1, Math.ceil(Math.sqrt(totalSquad))));
+      const visible = Math.min(totalSquad, this.squadPowerCount());
       const baseX = this.laneX(this.state.x);
       const baseY = this.height - 108;
       let existing = this.squadGroup.getChildren();
@@ -329,9 +349,13 @@
       return { x: (col - (usedCols - 1) / 2) * 22, y: row * 20 };
     }
 
+    squadPowerCount() {
+      return Math.max(1, Math.ceil(Math.sqrt(Math.max(1, Math.floor(this.state.squad)))));
+    }
+
     fire() {
       const weapon = this.currentWeapon();
-      const shooters = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, Math.floor(this.state.squad)))));
+      const shooters = this.squadPowerCount();
       const baseY = this.height - 138;
       for (let i = 0; i < shooters; i += 1) {
         const offset = this.formationOffset(i, shooters);
@@ -393,25 +417,29 @@
       this.state.phase = deferred ? this.state.phase : "combat";
       this.state.bossRank = "";
       this.state.wave += 1;
-      const count = Math.min(136, Math.floor((58 + this.state.levelIndex * 18 + (isRush ? 24 : 0)) * level.countScale));
-      const hpEach = Math.round((7 + this.state.levelIndex * 4 + (isRush ? 4 : 0)) * level.hpScale);
-      const cols = 10;
-      const spread = Math.min(330, this.width * 0.86);
+      const count = Math.min(640, Math.floor((142 + this.state.levelIndex * 34 + (isRush ? 74 : 0)) * level.countScale));
+      const hpEach = Math.round((4 + this.state.levelIndex * 2.5 + (isRush ? 2 : 0)) * level.hpScale);
+      const cols = 18;
+      const spread = Math.min(348, this.width * 0.9);
+      const eliteEvery = level.eliteEvery || 17;
+      const speedScale = level.speedScale || 1;
       this.state.waveHp = 0;
       for (let i = 0; i < count; i += 1) {
         const row = Math.floor(i / cols);
         const col = i % cols;
         const usedCols = Math.min(cols, count - row * cols);
-        const elite = isRush && i % 17 === 0;
-        const x = this.width * 0.5 + (col - (usedCols - 1) / 2) * (spread / Math.max(1, cols - 1)) + Phaser.Math.Between(-8, 8);
-        const y = -40 - row * 26 - Phaser.Math.Between(0, 12) - (deferred ? 120 : 0);
-        const enemy = this.enemyGroup.create(x, y, "bug").setDepth(2).setScale(elite ? 1.06 : 0.86);
+        const elite = isRush && i % eliteEvery === 0;
+        const x = this.width * 0.5 + (col - (usedCols - 1) / 2) * (spread / Math.max(1, cols - 1)) + Phaser.Math.Between(-5, 5);
+        const y = -32 - row * 17 - Phaser.Math.Between(0, 8) - (deferred ? 120 : 0);
+        const enemy = this.enemyGroup.create(x, y, "bug").setDepth(2).setScale(elite ? 0.78 : 0.58);
         this.setupEnemy(enemy, {
           type: "bug",
           hp: elite ? hpEach * 2.2 : hpEach,
-          speed: 50 + this.state.wave * 2.2 + this.state.levelIndex * 4 + (elite ? 12 : 0),
+          speed: (58 + this.state.wave * 2.6 + this.state.levelIndex * 4 + (elite ? 14 : 0)) * speedScale,
           elite,
           wobble: Math.random() * Math.PI * 2,
+          wobbleAmp: elite ? 1.4 : 12,
+          wobbleSpeed: elite ? 0.00075 : 0.0032,
           score: elite ? 32 : 14,
         });
       }
@@ -425,7 +453,7 @@
       this.state.bossRank = "mini";
       const hp = Math.round((520 + this.state.levelIndex * 220 + this.state.squad * 10) * level.hpScale);
       const enemy = this.enemyGroup.create(this.width * 0.5, deferred ? -36 : 70, "miniBoss").setDepth(2).setScale(0.9);
-      this.setupEnemy(enemy, { type: "miniBoss", hp, speed: 46 + this.state.levelIndex * 2, wobble: 0, wobbleRange: Math.min(105, this.width * 0.27), score: 500 });
+      this.setupEnemy(enemy, { type: "miniBoss", hp, speed: (46 + this.state.levelIndex * 2) * (level.speedScale || 1), wobble: 0, wobbleRange: Math.min(105, this.width * 0.27), score: 500 });
       this.floatText(level.miniBoss, this.width * 0.5, 88, "#d94d62");
     }
 
@@ -439,14 +467,17 @@
       this.setupEnemy(enemy, {
         type: "boss",
         hp,
-        speed: 40 + this.state.levelIndex * 2,
+        speed: (40 + this.state.levelIndex * 2) * (level.speedScale || 1),
         wobble: 0,
         wobbleRange: Math.min(72, this.width * 0.18),
-        moveSpeed: 72,
+        moveSpeed: 72 + Math.min(34, this.state.levelIndex * 2),
         score: 1800,
       });
       enemy.rage70 = false;
       enemy.rage30 = false;
+      enemy.rageLevel = 0;
+      enemy.nextSummonAt = this.time.now + 2200;
+      enemy.nextFeatherAt = this.time.now + 1400;
       enemy.body.setSize(enemy.displayWidth * 1.58, enemy.displayHeight * 1.08, true);
       this.floatText(level.boss, this.width * 0.5, 88, "#d94d62");
     }
@@ -457,6 +488,8 @@
       enemy.maxHp = data.hp;
       enemy.speed = data.speed;
       enemy.wobble = data.wobble;
+      enemy.wobbleAmp = data.wobbleAmp || 10;
+      enemy.wobbleSpeed = data.wobbleSpeed || 0.003;
       enemy.wobbleRange = data.wobbleRange || Math.min(115, this.width * 0.3);
       enemy.moveSpeed = data.moveSpeed || 70;
       enemy.moveTargetX = enemy.x;
@@ -476,9 +509,11 @@
       for (const enemy of enemies) {
         if (!enemy.active) continue;
         if (enemy.kind === "bug") {
-          enemy.x += Math.sin(this.time.now * 0.004 + enemy.wobble) * 16 * dt;
+          enemy.x += Math.sin(this.time.now * enemy.wobbleSpeed + enemy.wobble) * enemy.wobbleAmp * dt;
+          this.checkBugPlayerCollision(enemy);
         } else if (enemy.kind === "boss") {
           this.updateBossMovement(enemy, dt);
+          this.updateBossAttacks(enemy);
         } else {
           const nextX = this.width * 0.5 + Math.sin(this.time.now * 0.0018 + enemy.wobble) * enemy.wobbleRange;
           enemy.lastX = enemy.x;
@@ -486,7 +521,12 @@
         }
 
         if (enemy.y > attackLine) {
-          const loss = enemy.kind === "bug" ? (enemy.scaleX > 1 ? 2 : 1) : enemy.kind === "miniBoss" ? 8 : 12 * dt;
+          if (enemy.kind === "bug") {
+            this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
+            enemy.destroy();
+            continue;
+          }
+          const loss = enemy.kind === "miniBoss" ? 8 : 12 * dt;
           this.state.squad -= loss;
           this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
           if (enemy.kind === "boss") enemy.y = attackLine;
@@ -526,6 +566,80 @@
       if (Math.abs(step) > 0.2) enemy.setFlipX(step > 0);
       enemy.lastX = enemy.x;
       enemy.x = nextX;
+    }
+
+    checkBugPlayerCollision(enemy) {
+      const playerX = this.laneX(this.state.x);
+      const playerY = this.height - 86;
+      const radius = enemy.scaleX > 0.7 ? 30 : 22;
+      if (Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY) > radius) return;
+
+      const loss = enemy.scaleX > 0.7 ? 2 : 1;
+      this.state.squad -= loss;
+      this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
+      this.floatText(`-${loss}`, playerX, playerY - 64, "#d94d62");
+      this.pop(enemy.x, enemy.y, 0xd94d62, enemy.scaleX > 0.7 ? 12 : 7);
+      enemy.destroy();
+      if (this.state.squad <= 0) this.endGame(false, "Squad Down");
+    }
+
+    updateBossAttacks(boss) {
+      const now = this.time.now;
+      if (now >= boss.nextSummonAt) {
+        this.spawnBossBugArmy(boss);
+        boss.nextSummonAt = now + Phaser.Math.Between(5200, 7200) - boss.rageLevel * 700;
+      }
+      if (now >= boss.nextFeatherAt) {
+        this.spawnFeatherVolley(boss);
+        boss.nextFeatherAt = now + Phaser.Math.Between(1500, 2300) - boss.rageLevel * 260;
+      }
+    }
+
+    spawnBossBugArmy(boss) {
+      const level = this.level();
+      const amount = Math.floor((360 + boss.rageLevel * 140 + this.state.levelIndex * 54) * (level.swarmScale || 1));
+      const cols = 18;
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const spread = Math.min(156, this.width * 0.4);
+      const centerX = this.laneX(side * 0.48);
+      const hp = Math.max(2, Math.round((3.2 + this.state.levelIndex * 1.3) * level.hpScale));
+      for (let i = 0; i < amount; i += 1) {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const usedCols = Math.min(cols, amount - row * cols);
+        const x = centerX + (col - (usedCols - 1) / 2) * (spread / Math.max(1, cols - 1)) + Phaser.Math.Between(-4, 4);
+        const y = boss.y - 96 - row * 11 - Phaser.Math.Between(0, 8);
+        const bug = this.enemyGroup.create(x, y, "bug").setDepth(2).setScale(0.42);
+        this.setupEnemy(bug, {
+          type: "bug",
+          hp,
+          speed: (76 + boss.rageLevel * 18 + this.state.levelIndex * 5) * (level.speedScale || 1),
+          wobble: Math.random() * Math.PI * 2,
+          wobbleAmp: 7,
+          wobbleSpeed: 0.002,
+          score: 6,
+        });
+      }
+      this.floatText("虫群来了", this.width * 0.5, Math.max(94, boss.y + 62), "#6755d7");
+    }
+
+    spawnFeatherVolley(boss) {
+      const count = 5 + boss.rageLevel * 3 + (this.level().featherBonus || 0);
+      const baseSpeed = 250 + boss.rageLevel * 42;
+      for (let i = 0; i < count; i += 1) {
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const angle = Phaser.Math.DegToRad(72 + t * 36 + Phaser.Math.Between(-5, 5));
+        const feather = this.add.image(boss.x, boss.y + boss.displayHeight * 0.22, "feather").setDepth(4).setScale(0.82);
+        feather.setAngle(Phaser.Math.RadToDeg(angle) - 90);
+        this.physics.add.existing(feather);
+        this.enemyBulletGroup.add(feather);
+        feather.body.setVelocity(Math.cos(angle) * baseSpeed, Math.sin(angle) * baseSpeed);
+        feather.body.setAllowGravity(false);
+        feather.body.setSize(14, 28, true);
+        feather.damage = 1 + boss.rageLevel;
+        feather.expiresAt = this.time.now + 3600;
+      }
+      this.floatText("羽毛！", boss.x, boss.y + 48, "#d94d62");
     }
 
     maybeStartReward() {
@@ -630,7 +744,7 @@
           const option = this.state.x < 0 ? reward.left : reward.right;
           if (option.op === "mul") this.state.squad = Math.floor(this.state.squad * option.value);
           if (option.op === "add") this.state.squad = Math.floor(this.state.squad + option.value);
-          this.state.squad = Phaser.Math.Clamp(this.state.squad, 1, 160);
+          this.state.squad = Phaser.Math.Clamp(this.state.squad, 1, maxSquad);
           this.floatText(option.label, this.laneX(this.state.x), playerY - 70, option.value < 0 ? "#d94d62" : "#35b979");
           reward.destroy();
         }
@@ -700,6 +814,24 @@
       }
     }
 
+    updateEnemyBullets(delta) {
+      const playerX = this.laneX(this.state.x);
+      const playerY = this.height - 112;
+      for (const bullet of this.enemyBulletGroup.getChildren()) {
+        if (!bullet.active) continue;
+        if (bullet.expiresAt <= this.time.now || bullet.y > this.height + 90 || bullet.x < -90 || bullet.x > this.width + 90) {
+          bullet.destroy();
+          continue;
+        }
+        if (Phaser.Math.Distance.Between(bullet.x, bullet.y, playerX, playerY) < 42) {
+          this.state.squad = Math.max(1, this.state.squad - (bullet.damage || 1));
+          this.floatText(`-${bullet.damage || 1}`, playerX, playerY - 62, "#d94d62");
+          this.pop(bullet.x, bullet.y, 0xf6f0dd, 10);
+          bullet.destroy();
+        }
+      }
+    }
+
     checkBossVisualHits(bullet) {
       for (const boss of this.enemyGroup.getChildren()) {
         if (!bullet.active || !boss.active || boss.kind !== "boss") continue;
@@ -748,6 +880,7 @@
       enemy.hp -= actual;
       this.state.waveHp = Math.max(0, this.state.waveHp - actual);
       this.state.score += Math.ceil(actual * (enemy.kind === "bug" ? 0.8 : 1.35));
+      this.hitSpark(enemy, amount);
       if (enemy.hp <= 0) {
         this.state.kills += 1;
         this.state.score += enemy.scoreValue || 10;
@@ -757,6 +890,34 @@
         if (enemy.kind === "boss") this.updateBossRage(enemy);
         enemy.setTint(0xffd8d8);
         this.time.delayedCall(50, () => enemy.active && enemy.clearTint());
+      }
+    }
+
+    hitSpark(enemy, amount) {
+      const now = this.time.now;
+      if (enemy.nextHitSparkAt && now < enemy.nextHitSparkAt) return;
+      enemy.nextHitSparkAt = now + (enemy.kind === "boss" ? 80 : 38);
+      const amountScale = enemy.kind === "boss" ? 8 : 4;
+      const n = Math.min(14, amountScale + Math.floor(amount * 0.16));
+      const color = enemy.kind === "boss" ? 0xffd34d : 0xfff0a3;
+      for (let i = 0; i < n; i += 1) {
+        const dot = this.add.circle(
+          enemy.x + Phaser.Math.Between(-10, 10),
+          enemy.y + Phaser.Math.Between(-10, 10),
+          Phaser.Math.Between(2, 4),
+          color,
+          0.95
+        ).setDepth(6);
+        this.fxGroup.add(dot);
+        this.tweens.add({
+          targets: dot,
+          x: dot.x + Phaser.Math.Between(-24, 24),
+          y: dot.y + Phaser.Math.Between(-26, 16),
+          alpha: 0,
+          scale: 0.25,
+          duration: 220,
+          onComplete: () => dot.destroy(),
+        });
       }
     }
 
@@ -896,7 +1057,7 @@
       if (id === "damage") this.state.damageBoost = Math.min(1.2, this.state.damageBoost + 0.18);
       if (id === "bigBullet") this.state.bulletSizeBoost = Math.min(0.9, this.state.bulletSizeBoost + 0.25);
       if (id === "pierce") this.state.pierceBonus = Math.min(3, this.state.pierceBonus + 1);
-      if (id === "squad") this.state.squad = Phaser.Math.Clamp(this.state.squad + 8, 1, 160);
+      if (id === "squad") this.state.squad = Phaser.Math.Clamp(this.state.squad + 8, 1, maxSquad);
       if (id === "formation") this.state.formationBonus = Math.min(12, this.state.formationBonus + 4);
       if (id === "cat") this.state.catTimer = 8000;
     }

@@ -1,18 +1,19 @@
 # wxgame-lab
 
-手机端网页小游戏合集。
+一个适合手机端直接玩的网页小游戏合集，使用原生 HTML、CSS 和 Canvas 实现。
 
-- 木板冲刺：收集木板、穿过倍率门、自动铺桥
-- 企鹅打枪：企鹅小队射击虫潮，补给段交替出现，最终挑战夜鹭 Boss
+## 小游戏
 
-本地预览：
+- **木板冲刺**  
+  操控角色在天空走廊上前进，收集木板、穿过人数/倍率门，遇到断桥时一块一块铺板冲过去。
 
-```powershell
-python -m http.server 4174 --directory E:\workspace\wxgame
-```
+- **企鹅打枪**  
+  操控企鹅小队射击虫潮，战斗段和补给段交替出现。可以吃枪械、激光、人数门和猫猫变身道具，挑战小 Boss 和最终夜鹭 Boss。
 
-然后打开：
+## 在线游玩
+
+GitHub Pages:
 
 ```text
-http://127.0.0.1:4174
+https://isayrhythm.github.io/wxgame-lab/
 ```

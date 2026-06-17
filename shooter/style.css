@@ -46,6 +46,98 @@ body {
   background: radial-gradient(circle at 34% 28%, #c9fff0 0 18%, var(--green) 20% 70%, #1f7d52 72%);
 }
 
+.leaderboard {
+  display: grid;
+  gap: 7px;
+  max-height: 168px;
+  margin: -6px 0 18px;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.leaderboard li {
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid rgba(33, 48, 52, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  text-align: left;
+}
+
+.leaderboard span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffd34d;
+  color: #392711;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.leaderboard strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.leaderboard small {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.upgrade-grid {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 16px;
+}
+
+.upgrade-card {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  grid-template-areas:
+    "icon name"
+    "icon desc";
+  column-gap: 10px;
+  min-height: 58px;
+  padding: 9px 10px;
+  border: 1px solid rgba(33, 48, 52, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--ink);
+  text-align: left;
+}
+
+.upgrade-card span {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffd34d;
+  color: #3d2a10;
+  font-weight: 900;
+}
+
+.upgrade-card strong {
+  grid-area: name;
+  align-self: end;
+  font-size: 15px;
+}
+
+.upgrade-card small {
+  grid-area: desc;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 @media (max-width: 360px) {
   .monster-pill {
     left: 58px;

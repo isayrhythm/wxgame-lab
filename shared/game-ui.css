@@ -158,7 +158,8 @@ h1 {
 }
 
 #primaryButton,
-#resumeButton {
+#resumeButton,
+#nextLevelButton {
   width: 100%;
   min-height: 48px;
   background: var(--accent);
@@ -188,6 +189,7 @@ h1 {
 
 #primaryButton:active,
 #resumeButton:active,
+#nextLevelButton:active,
 .home-link:active,
 .pause-button:active,
 .secondary-button:active {

@@ -504,34 +504,28 @@
 
     updateEnemies(delta) {
       const dt = delta / 1000;
-      const attackLine = this.height - 184;
+      const escapeLine = this.height + 72;
       const enemies = this.enemyGroup.getChildren();
       for (const enemy of enemies) {
         if (!enemy.active) continue;
         if (enemy.kind === "bug") {
           enemy.x += Math.sin(this.time.now * enemy.wobbleSpeed + enemy.wobble) * enemy.wobbleAmp * dt;
-          this.checkBugPlayerCollision(enemy);
+          this.checkEnemyPlayerCollision(enemy);
+          if (!enemy.active) continue;
+          if (enemy.y > escapeLine) {
+            this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
+            enemy.destroy();
+          }
+          continue;
         } else if (enemy.kind === "boss") {
           this.updateBossMovement(enemy, dt);
           this.updateBossAttacks(enemy);
+          this.checkEnemyPlayerCollision(enemy);
         } else {
           const nextX = this.width * 0.5 + Math.sin(this.time.now * 0.0018 + enemy.wobble) * enemy.wobbleRange;
           enemy.lastX = enemy.x;
           enemy.x = nextX;
-        }
-
-        if (enemy.y > attackLine) {
-          if (enemy.kind === "bug") {
-            this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
-            enemy.destroy();
-            continue;
-          }
-          const loss = enemy.kind === "miniBoss" ? 8 : 12 * dt;
-          this.state.squad -= loss;
-          this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
-          if (enemy.kind === "boss") enemy.y = attackLine;
-          else enemy.destroy();
-          if (this.state.squad <= 0) this.endGame(false, "Squad Down");
+          this.checkEnemyPlayerCollision(enemy);
         }
       }
 
@@ -568,19 +562,33 @@
       enemy.x = nextX;
     }
 
-    checkBugPlayerCollision(enemy) {
-      const playerX = this.laneX(this.state.x);
-      const playerY = this.height - 86;
-      const radius = enemy.scaleX > 0.7 ? 30 : 22;
-      if (Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY) > radius) return;
+    checkEnemyPlayerCollision(enemy) {
+      const hitTarget = this.findSquadHitTarget(enemy);
+      if (!hitTarget) return;
 
-      const loss = enemy.scaleX > 0.7 ? 2 : 1;
+      const loss = enemy.kind === "boss" ? 8 : enemy.kind === "miniBoss" ? 4 : enemy.scaleX > 0.7 ? 2 : 1;
       this.state.squad -= loss;
       this.state.waveHp = Math.max(0, this.state.waveHp - Math.max(0, enemy.hp));
-      this.floatText(`-${loss}`, playerX, playerY - 64, "#d94d62");
+      this.floatText(`-${loss}`, hitTarget.x, hitTarget.y - 52, "#d94d62");
       this.pop(enemy.x, enemy.y, 0xd94d62, enemy.scaleX > 0.7 ? 12 : 7);
-      enemy.destroy();
+      if (enemy.kind === "boss") {
+        enemy.y = Math.min(enemy.y, this.height - 150);
+        enemy.body.setVelocityY(0);
+      } else {
+        enemy.destroy();
+      }
       if (this.state.squad <= 0) this.endGame(false, "Squad Down");
+    }
+
+    findSquadHitTarget(enemy) {
+      const enemyRadius = enemy.kind === "boss" ? 42 : enemy.kind === "miniBoss" ? 30 : enemy.scaleX > 0.7 ? 15 : 11;
+      for (const member of this.squadGroup.getChildren()) {
+        if (!member.active || !member.visible) continue;
+        const memberRadius = Math.min(member.displayWidth, member.displayHeight) * 0.28;
+        const distance = Phaser.Math.Distance.Between(enemy.x, enemy.y, member.x, member.y);
+        if (distance <= enemyRadius + memberRadius) return member;
+      }
+      return null;
     }
 
     updateBossAttacks(boss) {
@@ -823,11 +831,12 @@
           bullet.destroy();
           continue;
         }
-        if (Phaser.Math.Distance.Between(bullet.x, bullet.y, playerX, playerY) < 42) {
-          this.state.squad = Math.max(1, this.state.squad - (bullet.damage || 1));
+        if (Phaser.Math.Distance.Between(bullet.x, bullet.y, playerX, playerY) < 30) {
+          this.state.squad -= bullet.damage || 1;
           this.floatText(`-${bullet.damage || 1}`, playerX, playerY - 62, "#d94d62");
           this.pop(bullet.x, bullet.y, 0xf6f0dd, 10);
           bullet.destroy();
+          if (this.state.squad <= 0) this.endGame(false, "Squad Down");
         }
       }
     }
@@ -855,7 +864,6 @@
         if (bullet.hitIds.has(enemy)) return;
         bullet.hitIds.add(enemy);
         this.damageEnemy(enemy, bullet.damage);
-        this.time.delayedCall(18, () => bullet.active && bullet.hitIds.delete(enemy));
         return;
       }
 
@@ -880,44 +888,12 @@
       enemy.hp -= actual;
       this.state.waveHp = Math.max(0, this.state.waveHp - actual);
       this.state.score += Math.ceil(actual * (enemy.kind === "bug" ? 0.8 : 1.35));
-      this.hitSpark(enemy, amount);
       if (enemy.hp <= 0) {
         this.state.kills += 1;
         this.state.score += enemy.scoreValue || 10;
-        this.pop(enemy.x, enemy.y, enemy.kind === "bug" ? 0xffd34d : 0xd94d62, enemy.kind === "bug" ? 8 : 22);
         enemy.destroy();
       } else if (enemy.kind !== "bug") {
         if (enemy.kind === "boss") this.updateBossRage(enemy);
-        enemy.setTint(0xffd8d8);
-        this.time.delayedCall(50, () => enemy.active && enemy.clearTint());
-      }
-    }
-
-    hitSpark(enemy, amount) {
-      const now = this.time.now;
-      if (enemy.nextHitSparkAt && now < enemy.nextHitSparkAt) return;
-      enemy.nextHitSparkAt = now + (enemy.kind === "boss" ? 80 : 38);
-      const amountScale = enemy.kind === "boss" ? 8 : 4;
-      const n = Math.min(14, amountScale + Math.floor(amount * 0.16));
-      const color = enemy.kind === "boss" ? 0xffd34d : 0xfff0a3;
-      for (let i = 0; i < n; i += 1) {
-        const dot = this.add.circle(
-          enemy.x + Phaser.Math.Between(-10, 10),
-          enemy.y + Phaser.Math.Between(-10, 10),
-          Phaser.Math.Between(2, 4),
-          color,
-          0.95
-        ).setDepth(6);
-        this.fxGroup.add(dot);
-        this.tweens.add({
-          targets: dot,
-          x: dot.x + Phaser.Math.Between(-24, 24),
-          y: dot.y + Phaser.Math.Between(-26, 16),
-          alpha: 0,
-          scale: 0.25,
-          duration: 220,
-          onComplete: () => dot.destroy(),
-        });
       }
     }
 

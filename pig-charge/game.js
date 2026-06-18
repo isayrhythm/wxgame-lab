@@ -9,14 +9,17 @@
 
   const colors = {
     ink: 0x2d2320,
-    road: 0x9d8d83,
-    roadLine: 0xcbbdb4,
-    rail: 0xad4464,
+    road: 0x6e6c67,
+    roadShade: 0x4f4d49,
+    roadLine: 0x8b8780,
+    rail: 0x9a3457,
+    field: 0xd29552,
+    fieldDark: 0x7e4d31,
     pig: 0xffa7bf,
     pigDark: 0xc46b81,
     blue: 0x2789df,
-    gateQty: 0x8a58d8,
-    gateAtk: 0xdb6a55,
+    gateQty: 0x41d79a,
+    gateAtk: 0x7768f1,
     coin: 0xf3c43b,
     enemy: 0x603b31,
   };
@@ -25,6 +28,10 @@
     constructor() {
       super("PigChargeScene");
       this.state = {};
+    }
+
+    preload() {
+      this.load.image("pigCharacter", "assets/pig-character.png");
     }
 
     create() {
@@ -44,12 +51,14 @@
       this.hpBars = this.add.graphics().setDepth(7);
       this.joystick = this.add.graphics().setDepth(8);
 
-      this.input.on("pointerdown", (pointer) => this.setTarget(pointer));
-      this.input.on("pointermove", (pointer) => this.setTarget(pointer));
-      this.input.keyboard.on("keydown-LEFT", () => this.nudgeTarget(-0.28));
-      this.input.keyboard.on("keydown-A", () => this.nudgeTarget(-0.28));
-      this.input.keyboard.on("keydown-RIGHT", () => this.nudgeTarget(0.28));
-      this.input.keyboard.on("keydown-D", () => this.nudgeTarget(0.28));
+      this.input.on("pointerdown", (pointer) => this.setMoveInput(pointer));
+      this.input.on("pointermove", (pointer) => {
+        if (pointer.isDown) this.setMoveInput(pointer);
+      });
+      this.input.on("pointerup", () => this.clearMoveInput());
+      this.input.on("pointerupoutside", () => this.clearMoveInput());
+      this.cursors = this.input.keyboard.createCursorKeys();
+      this.keys = this.input.keyboard.addKeys("W,A,S,D");
       this.input.keyboard.on("keydown-ESC", () => togglePause());
       this.input.keyboard.on("keydown-P", () => togglePause());
 
@@ -64,21 +73,28 @@
     resetState() {
       this.state.status = "ready";
       this.state.x = 0;
-      this.state.targetX = 0;
+      this.state.playerY = this.height ? this.height - 118 : 0;
+      this.state.moveX = 0;
+      this.state.moveY = 0;
+      this.state.moveSpeed = 390;
       this.state.lastX = 0;
       this.state.moveLean = 0;
-      this.state.pigs = 3;
-      this.state.attack = 1;
-      this.state.attackSpeed = 1;
+      this.state.pigs = 1;
+      this.state.attack = 3;
+      this.state.attackSpeed = 2;
       this.state.coins = 0;
+      this.state.level = 1;
       this.state.segment = 0;
       this.state.gatePairId = 0;
       this.state.spawnTimer = 0;
-      this.state.fireTimer = 180;
+      this.state.fireTimer = 35;
       this.state.obstacleTimer = 1800;
-      this.state.runSpeed = 280;
+      this.state.runSpeed = 318;
       this.state.combo = 0;
       this.state.bossCount = 0;
+      this.state.nextContactDamageAt = 0;
+      this.state.roadOffset = 0;
+      this.state.forwardInput = 0;
     }
 
     startGame() {
@@ -117,15 +133,17 @@
       g.generateTexture("pig", 64, 76);
 
       g.clear();
-      g.fillStyle(0x261817, 0.32).fillEllipse(28, 58, 36, 10);
-      g.fillStyle(0x351817, 1).fillRoundedRect(16, 24, 24, 31, 8);
-      g.fillStyle(0x661d21, 1).fillTriangle(15, 25, 4, 44, 20, 39).fillTriangle(39, 25, 52, 44, 36, 39);
-      g.fillStyle(0x1d1718, 1).fillCircle(28, 18, 13);
-      g.fillStyle(0x7f2230, 1);
-      g.fillTriangle(16, 12, 13, 0, 24, 9).fillTriangle(24, 8, 28, 0, 33, 9).fillTriangle(32, 9, 44, 2, 39, 15);
-      g.fillStyle(0xf3c43b, 1).fillRoundedRect(8, 22, 40, 5, 2);
-      g.fillStyle(0xffffff, 0.9).fillCircle(24, 17, 2).fillCircle(32, 17, 2);
-      g.lineStyle(3, 0x1d1718, 1).lineBetween(20, 54, 15, 63).lineBetween(36, 54, 41, 63);
+      g.fillStyle(0x161212, 0.34).fillEllipse(28, 61, 38, 10);
+      g.fillStyle(0x661d24, 1).fillTriangle(16, 26, 3, 58, 24, 50).fillTriangle(40, 26, 53, 58, 32, 50);
+      g.fillStyle(0x221817, 1).fillRoundedRect(16, 24, 24, 32, 7);
+      g.fillStyle(0x2e1c1a, 1).fillRoundedRect(20, 48, 7, 13, 3).fillRoundedRect(31, 48, 7, 13, 3);
+      g.fillStyle(0x141111, 1).fillCircle(28, 18, 13);
+      g.fillStyle(0x8b2430, 1);
+      g.fillTriangle(14, 12, 9, 0, 24, 10).fillTriangle(24, 8, 28, 0, 33, 9).fillTriangle(32, 10, 47, 1, 42, 14);
+      g.fillStyle(0xffd454, 1).fillRoundedRect(7, 22, 42, 5, 2);
+      g.fillStyle(0xf8f2b2, 0.95).fillCircle(24, 17, 2).fillCircle(33, 17, 2);
+      g.lineStyle(3, 0x171111, 1).lineBetween(18, 35, 7, 46).lineBetween(38, 35, 49, 46);
+      g.lineStyle(3, 0xb07c35, 1).lineBetween(49, 21, 50, 57);
       g.generateTexture("guard", 56, 68);
 
       g.clear();
@@ -152,14 +170,6 @@
       g.generateTexture("rock", 54, 48);
 
       g.clear();
-      g.fillStyle(0xffda4f, 1).fillEllipse(18, 14, 32, 18);
-      g.fillStyle(0xf0a71f, 1).fillRoundedRect(8, 6, 20, 16, 5);
-      g.fillStyle(0xfff2a8, 0.92).fillEllipse(18, 10, 17, 7);
-      g.lineStyle(3, 0x9d6b19, 1).strokeEllipse(18, 14, 31, 17);
-      g.lineStyle(2, 0xbd7a19, 0.9).lineBetween(9, 16, 27, 16);
-      g.generateTexture("ingot", 36, 28);
-
-      g.clear();
       g.fillStyle(0x48ff3f, 1).fillEllipse(12, 20, 16, 36);
       g.lineStyle(3, 0x0a7f26, 1).strokeEllipse(12, 20, 16, 36);
       g.fillStyle(0xcaffb4, 0.75).fillEllipse(9, 12, 5, 13);
@@ -177,49 +187,107 @@
       return this.width * 0.5 + value * Math.min(150, this.width * 0.38);
     }
 
-    setTarget(pointer) {
-      if (this.state.status !== "playing") return;
-      this.state.targetX = Phaser.Math.Clamp((pointer.x / this.width - 0.5) * 2.55, -1.04, 1.04);
+    playerY() {
+      return this.state.playerY || this.height - 118;
     }
 
-    nudgeTarget(amount) {
+    activeCombatZone() {
+      return this.penGroup.getChildren().find((zone) => zone.active && zone.activeCombat && !zone.breaking);
+    }
+
+    clampPlayerY(value) {
+      return Phaser.Math.Clamp(value, 86, this.height - 92);
+    }
+
+    combatPullLine() {
+      return this.height * 0.33;
+    }
+
+    setMoveInput(pointer) {
       if (this.state.status !== "playing") return;
-      this.state.targetX = Phaser.Math.Clamp(this.state.targetX + amount, -1.04, 1.04);
+      const baseX = this.width * 0.5;
+      const baseY = this.height - 86;
+      const dx = pointer.x - baseX;
+      const dy = pointer.y - baseY;
+      const len = Math.hypot(dx, dy);
+      if (len < 12) {
+        this.clearMoveInput();
+        return;
+      }
+      const strength = Phaser.Math.Clamp(len / 28, 0.72, 1);
+      this.state.moveX = (dx / len) * strength;
+      this.state.moveY = (dy / len) * strength;
+    }
+
+    clearMoveInput() {
+      this.state.moveX = 0;
+      this.state.moveY = 0;
+    }
+
+    updateKeyboardInput() {
+      if (!this.cursors || !this.keys) return;
+      const left = this.cursors.left.isDown || this.keys.A.isDown;
+      const right = this.cursors.right.isDown || this.keys.D.isDown;
+      const up = this.cursors.up.isDown || this.keys.W.isDown;
+      const down = this.cursors.down.isDown || this.keys.S.isDown;
+      const x = (right ? 1 : 0) - (left ? 1 : 0);
+      const y = (down ? 1 : 0) - (up ? 1 : 0);
+      if (x === 0 && y === 0) return;
+      const len = Math.hypot(x, y) || 1;
+      this.state.moveX = x / len;
+      this.state.moveY = y / len;
     }
 
     update(time, delta) {
       if (this.state.status !== "playing" || this.scene.isPaused()) return;
       const dt = Math.min(delta, 34) / 1000;
+      const combatActive = Boolean(this.activeCombatZone());
+      this.updateKeyboardInput();
+      const forwardInput = combatActive ? 0 : Math.max(0, -this.state.moveY);
+      this.state.forwardInput = forwardInput;
       const beforeX = this.state.x;
-      this.state.x += (this.state.targetX - this.state.x) * Math.min(1, dt * 18);
+      const laneSpan = Math.min(150, this.width * 0.38);
+      this.state.x = Phaser.Math.Clamp(this.state.x + (this.state.moveX * this.state.moveSpeed * dt) / laneSpan, -1.04, 1.04);
+      let nextPlayerY = this.clampPlayerY(this.state.playerY + this.state.moveY * this.state.moveSpeed * dt);
+      if (!combatActive) nextPlayerY = Math.max(nextPlayerY, this.combatPullLine());
+      this.state.playerY = nextPlayerY;
       this.state.moveLean += ((this.state.x - beforeX) * 180 - this.state.moveLean) * Math.min(1, dt * 10);
       this.state.moveLean = Phaser.Math.Clamp(this.state.moveLean, -14, 14);
       this.state.lastX = beforeX;
-      this.state.spawnTimer -= delta;
+      this.state.spawnTimer -= delta * (combatActive ? 0 : forwardInput);
       this.state.fireTimer -= delta;
       this.state.obstacleTimer -= delta;
+      if (!combatActive) this.state.roadOffset += delta * 0.18 * forwardInput;
       this.drawRoad(time);
       this.updateObjects(delta);
-      this.autoThrowIngots(delta);
       this.updatePenCombat(delta);
-      this.updateIngots(delta);
-      this.updateEnemyShots(delta);
+      this.autoThrowCoins(delta);
+      this.updateCoinShots(delta);
       this.updatePigs();
       this.drawEnemyHpBars();
       this.drawJoystick();
       this.updateHud();
-      if (this.state.spawnTimer <= 0) this.spawnSegment();
+      if (this.state.spawnTimer <= 0) {
+        if (this.hasLiveCombatSequence()) this.state.spawnTimer = 180;
+        else this.spawnSegment();
+      }
+    }
+
+    hasLiveCombatSequence() {
+      const hasZone = this.penGroup.getChildren().some((zone) => zone.active && !zone.breaking);
+      const hasEnemy = this.enemyGroup.getChildren().some((enemy) => enemy.active);
+      return hasZone || hasEnemy;
     }
 
     drawRoad(time) {
       const center = this.width * 0.5;
       const bottomW = Math.min(360, this.width * 0.9);
       const topW = Math.min(260, bottomW * 0.68);
-      const scroll = (time * 0.18) % 54;
+      const scroll = this.state.roadOffset % 54;
       this.road.clear();
-      this.road.fillStyle(0xd9915d, 1).fillRect(0, 0, this.width, this.height);
-      this.road.fillStyle(0xb8ada5, 0.22).fillCircle(center - bottomW * 0.58, this.height * 0.15, 96);
-      this.road.fillStyle(0xc17b55, 0.32).fillCircle(center + bottomW * 0.55, this.height * 0.78, 118);
+      this.road.fillStyle(0xd1914b, 1).fillRect(0, 0, this.width, this.height);
+      this.road.fillStyle(0xb9703d, 0.5).fillCircle(center - bottomW * 0.72, this.height * 0.3, 120);
+      this.road.fillStyle(0xe3a35a, 0.52).fillCircle(center + bottomW * 0.7, this.height * 0.72, 140);
       this.road.fillStyle(colors.road, 1);
       this.road.fillPoints([
         new Phaser.Geom.Point(center - topW / 2, -24),
@@ -227,14 +295,51 @@
         new Phaser.Geom.Point(center + bottomW / 2, this.height + 28),
         new Phaser.Geom.Point(center - bottomW / 2, this.height + 28),
       ], true, true);
-      this.road.lineStyle(7, colors.rail, 1);
-      this.road.lineBetween(center - topW / 2 - 8, -24, center - bottomW / 2 - 8, this.height + 28);
-      this.road.lineBetween(center + topW / 2 + 8, -24, center + bottomW / 2 + 8, this.height + 28);
-      this.road.lineStyle(2, colors.roadLine, 0.62);
-      for (let y = -54 + scroll; y < this.height + 54; y += 54) {
+      this.road.fillStyle(0x3f3d38, 0.08);
+      for (let i = 0; i < 28; i += 1) {
+        const y = ((i * 67 + scroll * 1.7) % (this.height + 120)) - 60;
         const p = Phaser.Math.Clamp(y / Math.max(1, this.height), 0, 1);
-        const w = Phaser.Math.Linear(topW * 0.36, bottomW * 0.58, p);
-        this.road.lineBetween(center - w * 0.36, y, center + w * 0.36, y);
+        const w = Phaser.Math.Linear(topW * 0.42, bottomW * 0.78, p);
+        const x = center + Math.sin(i * 7.31) * w * 0.42;
+        this.road.fillEllipse(x, y, 22 + (i % 4) * 10, 7 + (i % 3) * 3);
+      }
+      this.road.fillStyle(0xb9b2a5, 0.12);
+      for (let i = 0; i < 18; i += 1) {
+        const y = ((i * 91 + scroll * 1.25) % (this.height + 160)) - 80;
+        const p = Phaser.Math.Clamp(y / Math.max(1, this.height), 0, 1);
+        const w = Phaser.Math.Linear(topW * 0.5, bottomW * 0.82, p);
+        const x = center + Math.cos(i * 5.9) * w * 0.36;
+        this.road.fillEllipse(x, y, 14 + (i % 3) * 6, 4 + (i % 2) * 4);
+      }
+      this.road.fillStyle(0x8b8882, 0.16);
+      for (let y = -40 + scroll; y < this.height + 70; y += 70) {
+        const p = Phaser.Math.Clamp(y / Math.max(1, this.height), 0, 1);
+        const w = Phaser.Math.Linear(topW * 0.56, bottomW * 0.86, p);
+        this.road.fillRect(center - w * 0.48, y, w * 0.96, 2);
+      }
+      this.road.lineStyle(2, 0xa8a39a, 0.42);
+      for (let i = -2; i <= 2; i += 1) {
+        const bottomX = center + i * bottomW * 0.16;
+        const topX = center + i * topW * 0.1;
+        this.road.lineBetween(topX, -24, bottomX, this.height + 28);
+      }
+      for (const side of [-1, 1]) {
+        this.road.lineStyle(8, 0x5d4e53, 0.95);
+        this.road.lineBetween(center + side * (topW / 2 + 8), -24, center + side * (bottomW / 2 + 10), this.height + 28);
+        this.road.lineStyle(6, colors.rail, 1);
+        this.road.lineBetween(center + side * (topW / 2 + 26), -24, center + side * (bottomW / 2 + 44), this.height + 28);
+        for (let y = -38 + scroll * 1.4; y < this.height + 90; y += 84) {
+          const p = Phaser.Math.Clamp(y / Math.max(1, this.height), 0, 1);
+          const edge = Phaser.Math.Linear(topW / 2 + 26, bottomW / 2 + 44, p);
+          const x = center + side * edge;
+          this.road.fillStyle(colors.rail, 1).fillCircle(x, y, 7);
+          this.road.fillStyle(0xc35b79, 1).fillTriangle(x - 7, y - 4, x + 7, y - 4, x, y - 18);
+          if (Math.floor(y / 84) % 3 === 0) {
+            const rockX = x + side * 34;
+            this.road.fillStyle(0x6f6658, 0.55).fillEllipse(rockX, y + 24, 24, 15);
+            this.road.fillStyle(0xb2a18b, 0.36).fillEllipse(rockX - side * 4, y + 19, 14, 7);
+          }
+        }
       }
     }
 
@@ -242,11 +347,12 @@
       const totalPigs = Math.max(1, Math.floor(this.state.pigs));
       const visible = Math.min(totalPigs, 24, Math.max(1, Math.ceil(Math.sqrt(totalPigs) * 2.4)));
       const baseX = this.laneX(this.state.x);
-      const baseY = this.height - 124;
+      const baseY = this.playerY() - 6;
       const runPhase = this.time.now * 0.012;
+      const baseScale = totalPigs <= 1 ? 0.24 : totalPigs <= 4 ? 0.205 : totalPigs <= 10 ? 0.178 : 0.155;
       let existing = this.pigGroup.getChildren();
       while (existing.length < visible) {
-        const pig = this.add.image(0, 0, "pig").setDepth(5).setScale(0.62);
+        const pig = this.add.image(0, 0, "pigCharacter").setDepth(5).setScale(baseScale);
         pig.seed = Math.random() * Math.PI * 2;
         this.pigGroup.add(pig);
         existing = this.pigGroup.getChildren();
@@ -263,7 +369,7 @@
         const lean = this.state.moveLean * 0.55;
         pig.setPosition(baseX + pos.x + sway, baseY + pos.y + bob);
         pig.setAngle(lean + Math.sin(runPhase + i) * 2.5);
-        pig.setScale(0.6 + Math.sin(runPhase + pig.seed) * 0.018);
+        pig.setScale(baseScale + Math.sin(runPhase + pig.seed) * 0.006);
       }
       if (this.countBadge) this.countBadge.destroy();
       if (totalPigs > visible) {
@@ -289,36 +395,59 @@
     drawJoystick() {
       const baseX = this.width * 0.5;
       const baseY = this.height - 86;
-      const knobX = baseX + this.state.x * 42;
+      const knobX = baseX + this.state.moveX * 42;
+      const knobY = baseY + this.state.moveY * 42;
       this.joystick.clear();
       this.joystick.lineStyle(3, 0x2d2320, 0.38).strokeCircle(baseX, baseY, 54);
-      this.joystick.fillStyle(colors.blue, 0.88).fillCircle(knobX, baseY, 19);
+      this.joystick.fillStyle(colors.blue, 0.88).fillCircle(knobX, knobY, 19);
     }
 
     spawnSegment() {
       this.state.segment += 1;
-      this.state.spawnTimer = 2050;
-      const mod = this.state.segment % 5;
-      if (this.state.segment % 8 === 0) this.spawnBoss();
-      else if (mod === 1 || mod === 3) this.spawnGatePairV2();
+      this.state.spawnTimer = Math.max(980, 1650 - this.state.segment * 18 - (this.state.level - 1) * 75);
+      const mod = this.state.segment % 6;
+      if (this.state.segment >= 14 && this.state.segment % 14 === 0) this.spawnBoss();
+      else if (mod === 1 || mod === 3) this.spawnGateRush();
       else if (mod === 2) {
         this.spawnCoins();
-        if (this.state.segment > 4) this.spawnEnemyPack(-360);
+        if (this.state.segment > 2) this.spawnEnemyPack(-430);
+      }
+      else if (mod === 4) {
+        this.spawnCoins(-0.62);
+        this.spawnCoins(0.62, -160);
       }
       else this.spawnEnemyPack();
     }
 
-    spawnGatePairV2() {
+    spawnGateRush() {
+      this.spawnGatePairV2(-92);
+      this.spawnEnemyPack(-520);
+    }
+
+    spawnGatePairV2(y = -70) {
       const choices = [
+        [{ label: "攻速x2", kind: "speedMul", value: 2 }, { label: "数量+3", kind: "qty", value: 3 }],
         [{ label: "数量+5", kind: "qty", value: 5 }, { label: "攻击力x3", kind: "atkMul", value: 3 }],
-        [{ label: "攻击力x2", kind: "atkMul", value: 2 }, { label: "攻击速x3", kind: "speedMul", value: 3 }],
-        [{ label: "数量+2", kind: "qty", value: 2 }, { label: "数量-8", kind: "qty", value: -8 }],
-        [{ label: "攻击力x2", kind: "atkMul", value: 2 }, { label: "步入道门", kind: "qtyMul", value: 2 }],
-        [{ label: "攻击速x2", kind: "speedMul", value: 2 }, { label: "数量+10", kind: "qty", value: 10 }],
-      ][Phaser.Math.Wrap(this.state.segment - 1, 0, 5)];
+        [{ label: "数量+5", kind: "qty", value: 5 }, { label: "攻击力x3", kind: "atkMul", value: 3 }],
+        [{ label: "数量x2", kind: "qtyMul", value: 2 }, { label: "转世为人", kind: "atkMul", value: 2 }],
+        [{ label: "攻击力x2", kind: "atkMul", value: 2 }, { label: "攻速x2", kind: "speedMul", value: 2 }],
+        [{ label: "数量x2", kind: "qtyMul", value: 2 }, { label: "数量+10", kind: "qty", value: 10 }],
+      ][Phaser.Math.Wrap(this.state.segment - 1, 0, 6)];
       const pairId = ++this.state.gatePairId;
-      this.createGate(-70, -0.48, choices[0], pairId);
-      this.createGate(-70, 0.48, choices[1], pairId);
+      this.createGate(y, -0.48, choices[0], pairId);
+      this.createGate(y, 0.48, choices[1], pairId);
+      this.createGateDivider(y, pairId);
+    }
+
+    createGateDivider(y, pairId) {
+      const divider = this.add.container(this.width * 0.5, y).setDepth(4);
+      divider.kind = "gateDivider";
+      divider.pairId = pairId;
+      divider.used = false;
+      divider.add(this.add.rectangle(0, 0, 12, 104, colors.rail, 1));
+      divider.add(this.add.circle(0, -54, 9, 0xb43d62, 1));
+      divider.add(this.add.circle(0, 54, 9, 0xb43d62, 1));
+      this.gateGroup.add(divider);
     }
 
     spawnGatePair() {
@@ -341,31 +470,33 @@
       gate.lane = lane;
       gate.option = option;
       gate.pairId = pairId;
+      gate.side = lane < 0 ? -1 : 1;
       gate.used = false;
-      gate.add(this.add.rectangle(-64, 0, 10, 72, 0x93315f, 0.96));
-      gate.add(this.add.rectangle(64, 0, 10, 72, 0x93315f, 0.96));
-      gate.add(this.add.circle(-64, -38, 7, 0xb54a79, 1));
-      gate.add(this.add.circle(64, -38, 7, 0xb54a79, 1));
-      gate.add(this.add.rectangle(0, 3, 130, 54, 0x2d2320, 0.28));
-      gate.add(this.add.rectangle(0, 0, 126, 52, color, 0.72).setStrokeStyle(3, color, 1));
-      gate.add(this.add.text(0, 0, option.label, {
+      gate.add(this.add.rectangle(0, 0, 176, 78, color, 0.14));
+      gate.add(this.add.rectangle(0, 0, 170, 70, color, 0.3).setStrokeStyle(3, 0xfff4d2, 0.78));
+      gate.add(this.add.rectangle(0, -18, 164, 8, 0xffffff, 0.16));
+      gate.add(this.add.rectangle(0, 18, 164, 8, 0xffffff, 0.11));
+      for (let i = -2; i <= 2; i += 1) gate.add(this.add.rectangle(i * 30, 0, 2, 68, 0xffffff, 0.08));
+      gate.add(this.add.rectangle(lane < 0 ? -89 : 89, 0, 10, 96, colors.rail, 1));
+      gate.add(this.add.circle(lane < 0 ? -89 : 89, -50, 9, 0xb43d62, 1));
+      gate.add(this.add.circle(lane < 0 ? -89 : 89, 50, 9, 0xb43d62, 1));
+      gate.add(this.add.text(0, -2, option.label, {
         fontFamily: "Microsoft YaHei, system-ui, sans-serif",
-        fontSize: "18px",
+        fontSize: "22px",
         fontStyle: "900",
         color: "#ffffff",
-        stroke: "#3c241f",
-        strokeThickness: 3,
+        stroke: "#14100e",
+        strokeThickness: 5,
       }).setOrigin(0.5));
       this.gateGroup.add(gate);
     }
 
-    spawnCoins() {
-      const lane = Math.random() < 0.5 ? -0.42 : 0.42;
+    spawnCoins(lane = Math.random() < 0.5 ? -0.42 : 0.42, yOffset = 0) {
       const curve = Math.random() < 0.5 ? -1 : 1;
       for (let i = 0; i < 28; i += 1) {
         const wave = Math.sin(i * 0.62) * 32 * curve;
         const fan = (i % 4 - 1.5) * 10;
-        const coin = this.add.image(this.laneX(lane) + wave + fan, -42 - i * 20, "coin").setDepth(2).setScale(0.82);
+        const coin = this.add.image(this.laneX(lane) + wave + fan, yOffset - 42 - i * 20, "coin").setDepth(2).setScale(0.82);
         coin.kind = "coin";
         coin.value = 1;
         this.coinGroup.add(coin);
@@ -373,29 +504,30 @@
     }
 
     spawnEnemyPack(yOffset = 0) {
-      const amount = Math.min(20, 3 + Math.floor(this.state.segment * 0.72));
-      const penId = `pen-${this.state.segment}-${this.time.now}`;
-      const rows = Math.max(1, Math.ceil(amount / 5));
-      const pen = this.createPigPen(this.width * 0.5, yOffset - 92 - (rows - 1) * 27, Math.min(312, this.width * 0.78), 92 + rows * 36, penId, false);
+      const amount = Math.min(42, 6 + Math.floor(this.state.segment * 0.95) + (this.state.level - 1) * 3);
+      const penId = `zone-${this.state.segment}-${this.time.now}`;
+      const cols = 6;
+      const rows = Math.max(1, Math.ceil(amount / cols));
+      const pen = this.createCombatZone(this.width * 0.5, yOffset - 98 - (rows - 1) * 25, Math.min(326, this.width * 0.82), 128 + rows * 36, penId, false);
       for (let i = 0; i < amount; i += 1) {
-        const row = Math.floor(i / 5);
-        const col = i % 5;
-        const usedCols = Math.min(5, amount - row * 5);
-        const x = this.laneX((col - (usedCols - 1) / 2) * 0.17) + Phaser.Math.Between(-6, 6);
-        const hp = 20 + this.state.segment * 5 + row * 4;
-        this.createEnemy(x, yOffset - 48 - row * 54 - Phaser.Math.Between(0, 10), "guard", hp, 1, penId);
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const usedCols = Math.min(cols, amount - row * cols);
+        const x = this.laneX((col - (usedCols - 1) / 2) * 0.14) + Phaser.Math.Between(-5, 5);
+      const hp = 8 + this.state.segment * 2.15 + row * 1.5 + (this.state.level - 1) * 7;
+        this.createEnemy(x, yOffset - 42 - row * 44 - Phaser.Math.Between(0, 8), "guard", hp, 1, penId);
       }
       return pen;
     }
 
     spawnBoss() {
       this.state.bossCount += 1;
-      const penId = `boss-pen-${this.state.bossCount}-${this.time.now}`;
-      const playerY = this.height - 118;
+      const penId = `boss-zone-${this.state.bossCount}-${this.time.now}`;
+      const playerY = this.playerY();
       const penHeight = Math.max(420, playerY - 70);
-      this.createPigPen(this.width * 0.5, (playerY + 130) / 2, Math.min(326, this.width * 0.84), penHeight, penId, true);
-      this.createEnemy(this.width * 0.5, -92, "boss", 260 + this.state.bossCount * 170 + this.state.segment * 18, 4, penId);
-      this.floatText("Boss", this.width * 0.5, 90, "#db6a55");
+      this.createCombatZone(this.width * 0.5, (playerY + 130) / 2, Math.min(326, this.width * 0.84), penHeight, penId, true);
+      this.createEnemy(this.width * 0.5, -92, "boss", 260 + this.state.bossCount * 170 + this.state.segment * 18 + (this.state.level - 1) * 260, 4 + this.state.level - 1, penId);
+      this.floatText(`第${this.state.level}关 Boss`, this.width * 0.5, 90, "#db6a55");
     }
 
     createEnemy(x, y, texture, hp, power, penId = "") {
@@ -406,94 +538,137 @@
       enemy.hp = hp;
       enemy.maxHp = hp;
       enemy.power = power;
-      enemy.nextShotAt = this.time.now + Phaser.Math.Between(1200, 2200);
+      enemy.nextWaveAt = this.time.now + Phaser.Math.Between(900, 1500);
       enemy.movePhase = Math.random() * Math.PI * 2;
       enemy.moveAmp = texture === "boss" ? Math.min(70, this.width * 0.18) : Phaser.Math.Between(8, 22);
       enemy.baseX = x;
       this.enemyGroup.add(enemy);
     }
 
-    createPigPen(x, y, width, height, penId, isBoss) {
+    createCombatZone(x, y, width, height, penId, isBoss) {
       const pen = this.add.container(x, y).setDepth(2);
-      pen.kind = "pen";
+      pen.kind = "zone";
       pen.penId = penId;
       pen.widthValue = width;
       pen.heightValue = height;
       pen.isBoss = isBoss;
       pen.activeCombat = false;
       pen.nextAttackAt = 0;
-      pen.nextRetaliateAt = 0;
-      const fill = this.add.rectangle(0, 0, width, height, isBoss ? 0x7b4a57 : 0x5f6b55, isBoss ? 0.13 : 0.16);
-      const railTop = this.add.rectangle(0, -height / 2, width, 8, 0x8b4d35, 0.95);
-      const railBottom = this.add.rectangle(0, height / 2, width, 8, 0x8b4d35, 0.95);
-      const railLeft = this.add.rectangle(-width / 2, 0, 8, height, 0x8b4d35, 0.95);
-      const railRight = this.add.rectangle(width / 2, 0, 8, height, 0x8b4d35, 0.95);
-      pen.add([fill, railTop, railBottom, railLeft, railRight]);
-      for (let i = -1; i <= 1; i += 1) {
-        pen.add(this.add.circle(i * width * 0.34, -height / 2, 7, 0xa6603e, 1));
-        pen.add(this.add.circle(i * width * 0.34, height / 2, 7, 0xa6603e, 1));
-      }
-      if (isBoss) {
-        pen.add(this.add.text(0, -height / 2 + 24, "猪栏", {
-          fontFamily: "Microsoft YaHei, system-ui, sans-serif",
-          fontSize: "20px",
-          fontStyle: "900",
-          color: "#ffffff",
-          stroke: "#5d302d",
-          strokeThickness: 4,
-        }).setOrigin(0.5));
-      }
       this.penGroup.add(pen);
       return pen;
     }
 
+    moveEnemyInsideZone(enemy, zone, playerX, playerY, delta) {
+      const dt = delta / 1000;
+      const targetY = playerY;
+      const dx = playerX - enemy.x;
+      const dy = targetY - enemy.y;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const entryBoost = enemy.y < this.combatPullLine() - 64 ? (enemy.type === "boss" ? 110 : 150) : 0;
+      const speed = (enemy.type === "boss" ? 44 : 34) + Math.min(16, this.state.segment * 1.05) + entryBoost;
+      enemy.x += (dx / distance) * speed * dt;
+      enemy.y += (dy / distance) * speed * dt;
+      enemy.x += Math.sin(this.time.now * 0.004 + enemy.movePhase) * 0.35;
+      const paddingX = enemy.type === "boss" ? 54 : 26;
+      enemy.x = Phaser.Math.Clamp(enemy.x, this.laneX(-1.02) + paddingX, this.laneX(1.02) - paddingX);
+      enemy.y = Phaser.Math.Clamp(enemy.y, 72, this.height - (enemy.type === "boss" ? 150 : 86));
+      enemy.baseX = enemy.x;
+    }
+
     updateObjects(delta) {
-      const dy = (this.state.runSpeed * delta) / 1000;
+      const combatActive = Boolean(this.activeCombatZone());
+      const dy = combatActive ? 0 : (this.state.runSpeed * this.state.forwardInput * delta) / 1000;
       const playerX = this.laneX(this.state.x);
-      const playerY = this.height - 118;
+      const playerY = this.playerY();
 
       for (const group of [this.gateGroup, this.obstacleGroup]) {
         for (const obj of group.getChildren()) obj.y += dy;
       }
 
       for (const pen of this.penGroup.getChildren()) {
+        if (pen.breaking) continue;
         if (pen.isBoss) continue;
         if (pen.activeCombat) {
-          pen.y += (playerY - pen.y) * Math.min(1, (delta / 1000) * 10);
+          pen.y += 0;
         } else {
           pen.y += dy;
         }
       }
 
       for (const enemy of this.enemyGroup.getChildren()) {
+        const pen = this.penGroup.getChildren().find((item) => item.penId === enemy.penId && !item.breaking);
         if (enemy.type === "boss") {
-          enemy.y += Math.min(dy, Math.max(0, 130 - enemy.y) * 0.08);
-          enemy.x = this.width * 0.5 + Math.sin(this.time.now * 0.0014 + enemy.movePhase) * enemy.moveAmp;
-          const bossPen = this.penGroup.getChildren().find((pen) => pen.penId === enemy.penId);
-          if (bossPen) bossPen.x = this.width * 0.5;
-          this.updateBossAttack(enemy);
-          this.maybeSpawnBossRocks(enemy);
+          if (pen && pen.activeCombat) {
+            this.moveEnemyInsideZone(enemy, pen, playerX, playerY, delta);
+            this.updateBossWave(enemy, playerX, playerY);
+          } else {
+            enemy.y += Math.min(dy, Math.max(0, 130 - enemy.y) * 0.08);
+            enemy.x = this.width * 0.5 + Math.sin(this.time.now * 0.0014 + enemy.movePhase) * enemy.moveAmp;
+          }
+          if (pen) pen.x = this.width * 0.5;
         } else {
-          const pen = this.penGroup.getChildren().find((item) => item.penId === enemy.penId);
-          if (!pen || !pen.activeCombat) enemy.y += dy;
-          enemy.x = enemy.baseX + Math.sin(this.time.now * 0.003 + enemy.movePhase) * enemy.moveAmp;
+          if (pen && pen.activeCombat) {
+            this.moveEnemyInsideZone(enemy, pen, playerX, playerY, delta);
+          } else {
+            enemy.y += dy;
+            enemy.x = enemy.baseX + Math.sin(this.time.now * 0.003 + enemy.movePhase) * enemy.moveAmp;
+          }
         }
       }
 
       for (const gate of this.gateGroup.getChildren()) {
-        if (!gate.used && Math.abs(gate.y - playerY) < 50 && Math.abs(gate.lane - this.state.x) < 0.48) {
+        const playerSide = playerX <= this.width * 0.5 ? -1 : 1;
+        if (!gate.used && Math.abs(gate.y - playerY) < 78 && gate.side === playerSide) {
           this.consumeGatePair(gate);
         } else if (gate.y > this.height + 80) gate.destroy();
       }
 
       this.updateCoins(delta, playerX, playerY, dy);
       this.updateObstacles(playerX, playerY);
+      this.updateBossWaves(delta, playerX, playerY, dy);
 
       for (const enemy of this.enemyGroup.getChildren()) {
-        if (Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY) < (enemy.type === "boss" ? 96 : 56)) {
+        if (Phaser.Math.Distance.Between(enemy.x, enemy.y, playerX, playerY) < (enemy.type === "boss" ? 82 : 42)) {
           this.hurtPigs(enemy);
         } else if (enemy.y > this.height + 90) {
           enemy.destroy();
+        }
+      }
+    }
+
+    updateBossWave(enemy, playerX, playerY) {
+      if (enemy.type !== "boss" || this.time.now < enemy.nextWaveAt) return;
+      const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y + 22, playerX, playerY - 12);
+      const wave = this.add.image(enemy.x, enemy.y + 22, "greenShot").setDepth(6).setScale(1.16);
+      const speed = 170 + Math.min(70, this.state.bossCount * 10);
+      wave.kind = "bossWave";
+      wave.vx = Math.cos(angle) * speed;
+      wave.vy = Math.sin(angle) * speed;
+      wave.damage = Math.max(1, Math.ceil(enemy.power * 0.65));
+      wave.expiresAt = this.time.now + 3600;
+      wave.angle = Phaser.Math.RadToDeg(angle) + 90;
+      this.enemyShotGroup.add(wave);
+      enemy.nextWaveAt = this.time.now + Phaser.Math.Between(1250, 1850);
+    }
+
+    updateBossWaves(delta, playerX, playerY, dy) {
+      const dt = delta / 1000;
+      for (const wave of this.enemyShotGroup.getChildren()) {
+        if (!wave.active) continue;
+        wave.x += wave.vx * dt;
+        wave.y += wave.vy * dt + dy;
+        wave.angle += 70 * dt;
+        if (wave.expiresAt <= this.time.now || wave.y > this.height + 90 || wave.x < -90 || wave.x > this.width + 90) {
+          wave.destroy();
+          continue;
+        }
+        if (Phaser.Math.Distance.Between(wave.x, wave.y, playerX, playerY) < 38) {
+          const loss = wave.damage || 1;
+          this.state.pigs -= loss;
+          this.floatText(`-${loss}`, playerX, playerY - 62, "#db6a55");
+          this.pop(wave.x, wave.y, 0x48ff3f, 10);
+          wave.destroy();
+          if (this.state.pigs <= 0) this.endGame(false);
         }
       }
     }
@@ -576,64 +751,27 @@
 
     updatePenCombat(delta) {
       const playerX = this.laneX(this.state.x);
-      const playerY = this.height - 118;
-      const now = this.time.now;
+      const playerY = this.playerY();
+      const hasOpenGate = this.gateGroup.getChildren().some((gate) => gate.active && gate.kind === "gate" && !gate.used);
       for (const pen of this.penGroup.getChildren()) {
         if (!pen.active) continue;
-        const inside = Math.abs(playerX - pen.x) < pen.widthValue * 0.5 && Math.abs(playerY - pen.y) < pen.heightValue * 0.5;
-        pen.activeCombat = inside;
-        pen.setAlpha(inside ? 1 : 0.68);
-        if (!inside) {
-          if (!pen.isBoss && pen.y > this.height + pen.heightValue * 0.5 + 80) pen.destroy();
-          continue;
-        }
-
+        if (pen.breaking) continue;
         const enemies = this.enemyGroup.getChildren().filter((enemy) => enemy.active && enemy.penId === pen.penId);
         if (enemies.length === 0) {
-          pen.destroy();
+          this.breakPigPen(pen, pen.isBoss);
           continue;
         }
 
-        if (now >= pen.nextAttackAt) {
-          pen.nextAttackAt = now + Math.max(90, 260 / Math.max(0.4, this.state.attackSpeed));
-          const hits = Math.min(enemies.length, this.shotCount());
-          const damage = Math.max(1, Math.round(this.state.attack * (1 + Math.sqrt(this.state.pigs) * 0.16)));
-          for (let i = 0; i < hits; i += 1) {
-            const enemy = enemies[(i + Math.floor(now / 260)) % enemies.length];
-            this.damageEnemy(enemy, damage);
-            this.showMeleeHit(enemy, i);
+        if (!pen.activeCombat) {
+          const pullLineReached = !hasOpenGate && playerY <= this.combatPullLine();
+          const waveIsInView = enemies.some((enemy) => enemy.y > 76) || pen.y > 76;
+          if (pullLineReached || waveIsInView) {
+            pen.activeCombat = true;
+          } else if (!pen.isBoss && pen.y > this.height + 120) {
+            pen.destroy();
           }
         }
-
-        if (now >= pen.nextRetaliateAt && !pen.isBoss) {
-          pen.nextRetaliateAt = now + 820;
-          const loss = Math.min(4, Math.max(1, Math.ceil(enemies.length / 7)));
-          this.state.pigs -= loss;
-          this.floatText(`-${loss}`, playerX, playerY - 70, "#db6a55");
-          this.pop(playerX, playerY - 28, colors.pigDark, 5);
-          if (this.state.pigs <= 0) this.endGame(false);
-        }
       }
-    }
-
-    showMeleeHit(enemy, index) {
-      const slash = this.add.text(enemy.x + Phaser.Math.Between(-16, 16), enemy.y + Phaser.Math.Between(-14, 12), "撞", {
-        fontFamily: "Microsoft YaHei, system-ui, sans-serif",
-        fontSize: index % 2 ? "18px" : "22px",
-        fontStyle: "900",
-        color: "#ffd84d",
-        stroke: "#5d302d",
-        strokeThickness: 3,
-      }).setOrigin(0.5).setDepth(8).setAngle(Phaser.Math.Between(-18, 18));
-      this.fxGroup.add(slash);
-      this.tweens.add({
-        targets: slash,
-        y: slash.y - 28,
-        alpha: 0,
-        scale: 1.25,
-        duration: 260,
-        onComplete: () => slash.destroy(),
-      });
     }
 
     applyGate(option) {
@@ -643,30 +781,39 @@
       if (option.kind === "atkAdd") this.state.attack = Math.min(999, this.state.attack + option.value);
       if (option.kind === "speedMul") this.state.attackSpeed = Math.min(12, this.state.attackSpeed * option.value);
       if (option.kind === "speedAdd") this.state.attackSpeed = Math.min(12, this.state.attackSpeed + option.value);
+      if (option.value > 0) this.state.combo += 1;
       this.floatText(option.label, this.laneX(this.state.x), this.height - 190, option.value < 0 ? "#db6a55" : "#4f9c5f");
+      this.floatText(`COMBO x${Math.max(1, this.state.combo)}`, this.width * 0.5, this.height - 238, "#f3c43b");
     }
 
     hurtPigs(enemy) {
+      if (this.time.now < this.state.nextContactDamageAt) return;
       if (enemy.lastBiteAt && this.time.now - enemy.lastBiteAt < 520) return;
       enemy.lastBiteAt = this.time.now;
-      const loss = Math.max(1, enemy.type === "boss" ? enemy.power : Math.ceil(enemy.power));
+      this.state.nextContactDamageAt = this.time.now + (enemy.type === "boss" ? 700 : 880);
+      const loss = Math.max(1, enemy.type === "boss" ? Math.ceil(enemy.power * 0.5) : 1);
+      const penId = enemy.penId;
+      const wasBoss = enemy.type === "boss";
       this.state.pigs -= loss;
-      this.floatText(`-${loss}`, this.laneX(this.state.x), this.height - 180, "#db6a55");
-      this.pop(this.laneX(this.state.x), this.height - 128, colors.pigDark, 8);
-      if (enemy.type !== "boss") enemy.destroy();
+      this.floatText(`-${loss}`, this.laneX(this.state.x), this.playerY() - 62, "#db6a55");
+      this.pop(this.laneX(this.state.x), this.playerY() - 10, colors.pigDark, 8);
+      if (enemy.type !== "boss") {
+        enemy.destroy();
+        this.checkPenCleared(penId, wasBoss);
+      }
       if (this.state.pigs <= 0) this.endGame(false);
     }
 
     shotCount() {
-      return Math.max(1, Math.ceil(Math.sqrt(Math.max(1, Math.floor(this.state.pigs)))));
+      return Math.max(1, Math.ceil(Math.sqrt(Math.max(1, Math.floor(this.state.pigs)))) + 1);
     }
 
-    autoThrowIngots(delta) {
+    autoThrowCoins(delta) {
       if (this.state.fireTimer > 0) return;
-      const delay = Math.max(170, 520 / Math.max(0.35, this.state.attackSpeed));
+      const delay = Math.max(115, 330 / Math.max(0.35, this.state.attackSpeed));
       const shooters = this.shotCount();
       const baseX = this.laneX(this.state.x);
-      const baseY = this.height - 150;
+      const baseY = this.playerY() - 32;
       const volley = [];
       for (let i = 0; i < shooters; i += 1) {
         const offset = this.formationOffset(i, shooters);
@@ -674,12 +821,12 @@
         if (target) volley.push({ offset, target, index: i });
       }
       if (volley.length === 0) {
-        this.state.fireTimer = 110;
+        this.state.fireTimer = 72;
         return;
       }
       this.state.fireTimer = delay;
       for (const shot of volley) {
-        this.throwIngot(baseX + shot.offset.x, baseY + shot.offset.y, shot.target, shot.index, shooters);
+        this.throwCoinShot(baseX + shot.offset.x, baseY + shot.offset.y, shot.target, shot.index, shooters);
       }
     }
 
@@ -687,12 +834,14 @@
       let best = null;
       let bestScore = Infinity;
       for (const enemy of this.enemyGroup.getChildren()) {
-        if (!enemy.active || enemy.y > y + 36) continue;
+        if (!enemy.active) continue;
+        const zone = this.penGroup.getChildren().find((item) => item.active && item.penId === enemy.penId);
+        if (!zone || !zone.activeCombat) continue;
         const distance = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-        if (distance > 470) continue;
+        if (distance > Math.min(245, this.height * 0.3)) continue;
         const dx = Math.abs(enemy.x - x);
-        const dy = Math.max(0, y - enemy.y);
-        const score = dx * 1.15 + dy * 0.6;
+        const dy = Math.abs(y - enemy.y);
+        const score = dx * 1.15 + dy * 0.72;
         if (score < bestScore) {
           bestScore = score;
           best = enemy;
@@ -701,44 +850,37 @@
       return best;
     }
 
-    throwIngot(x, y, target, index, total) {
-      const shot = this.add.image(x, y, "ingot").setDepth(6).setScale(total > 12 ? 0.72 : 0.86);
-      const spread = (index - (total - 1) / 2) * 16;
+    throwCoinShot(x, y, target, index, total) {
+      const shot = this.add.image(x, y, "coin").setDepth(6).setScale(total > 12 ? 0.38 : 0.46);
+      const spread = (index - (total - 1) / 2) * 10;
       let vx = spread;
-      let vy = -360;
+      let vy = -680;
       if (target) {
-        const tx = target.x + Phaser.Math.Between(-12, 12);
-        const ty = target.y + Phaser.Math.Between(-16, 12);
+        const tx = target.x + Phaser.Math.Between(-18, 18);
+        const ty = target.y + Phaser.Math.Between(-22, 12);
         const angle = Phaser.Math.Angle.Between(x, y, tx, ty);
-        const speed = 390 + Math.min(120, this.state.attackSpeed * 18);
-        vx = Math.cos(angle) * speed + spread * 0.35;
-        vy = Math.sin(angle) * speed - 80;
+        const speed = 560 + Math.min(130, this.state.attackSpeed * 24);
+        vx = Math.cos(angle) * speed + spread * 0.28;
+        vy = Math.sin(angle) * speed;
       }
-      shot.kind = "ingot";
+      shot.kind = "coinShot";
       shot.vx = vx;
       shot.vy = vy;
-      shot.gravity = 620;
+      shot.gravity = 0;
       shot.target = target;
-      shot.damage = Math.max(1, Math.round(this.state.attack * 0.85));
-      shot.expiresAt = this.time.now + 1350;
+      shot.damage = Math.max(2, Math.round(this.state.attack * 1.15));
+      shot.expiresAt = this.time.now + 560;
       this.playerShotGroup.add(shot);
     }
 
-    updateIngots(delta) {
+    updateCoinShots(delta) {
       const dt = delta / 1000;
       for (const shot of this.playerShotGroup.getChildren()) {
         if (!shot.active) continue;
-        if (shot.target && shot.target.active) {
-          const angle = Phaser.Math.Angle.Between(shot.x, shot.y, shot.target.x, shot.target.y);
-          const speed = Math.max(320, Math.hypot(shot.vx, shot.vy));
-          const turn = Math.min(1, dt * 3.6);
-          shot.vx += (Math.cos(angle) * speed - shot.vx) * turn;
-          shot.vy += (Math.sin(angle) * speed - shot.vy) * turn * 0.55;
-        }
         shot.vy += (shot.gravity || 0) * dt;
         shot.x += shot.vx * dt;
         shot.y += shot.vy * dt;
-        shot.angle += 420 * dt;
+        shot.angle += 720 * dt;
         if (shot.expiresAt <= this.time.now || shot.y < -80 || shot.x < -80 || shot.x > this.width + 80) {
           shot.destroy();
           continue;
@@ -761,9 +903,88 @@
       this.pop(enemy.x, enemy.y, colors.coin, enemy.type === "boss" ? 8 : 4);
       if (enemy.hp > 0) return;
       const reward = enemy.type === "boss" ? 36 : 5;
+      const penId = enemy.penId;
+      const wasBoss = enemy.type === "boss";
       this.floatText(`+${reward}`, enemy.x, enemy.y, "#f3c43b");
       this.dropCoins(enemy.x, enemy.y, reward, enemy.type === "boss");
       enemy.destroy();
+      this.checkPenCleared(penId, wasBoss);
+    }
+
+    checkPenCleared(penId, wasBoss) {
+      if (!penId) return;
+      const hasEnemies = this.enemyGroup.getChildren().some((enemy) => enemy.active && enemy.penId === penId);
+      if (hasEnemies) return;
+      const pen = this.penGroup.getChildren().find((item) => item.active && item.penId === penId);
+      if (!pen) return;
+      this.breakPigPen(pen, wasBoss);
+    }
+
+    breakPigPen(pen, wasBoss) {
+      if (!pen || !pen.active || pen.breaking) return;
+      pen.breaking = true;
+      pen.activeCombat = false;
+      const text = wasBoss ? "Boss 倒下！" : "清空！";
+      const color = wasBoss ? "#db6a55" : "#f3c43b";
+      this.floatText(text, pen.x, Math.max(88, pen.y - pen.heightValue * 0.35), color);
+      this.pop(pen.x, pen.y, wasBoss ? colors.gateAtk : colors.coin, wasBoss ? 28 : 18);
+      if (wasBoss) {
+        const bonus = 10 + this.state.bossCount * 2;
+        this.state.pigs = Math.min(maxSquad, this.state.pigs + bonus);
+        this.floatText(`猪群+${bonus}`, this.width * 0.5, this.height - 238, "#4f9c5f");
+        this.playerShotGroup.clear(true, true);
+        this.enemyShotGroup.clear(true, true);
+        for (const zone of this.penGroup.getChildren()) {
+          if (zone !== pen) zone.destroy();
+        }
+        this.tweens.add({
+          targets: pen,
+          scaleX: 1.08,
+          scaleY: 1.08,
+          alpha: 0,
+          duration: 260,
+          onComplete: () => {
+            pen.destroy();
+            this.advanceLevel();
+          },
+        });
+        return;
+      }
+      for (const child of pen.list || []) {
+        this.tweens.add({
+          targets: child,
+          x: child.x + Phaser.Math.Between(-34, 34),
+          y: child.y + Phaser.Math.Between(-24, 24),
+          angle: Phaser.Math.Between(-35, 35),
+          alpha: 0,
+          duration: 320,
+        });
+      }
+      this.tweens.add({
+        targets: pen,
+        scaleX: 1.08,
+        scaleY: 1.08,
+        alpha: 0,
+        duration: 340,
+        onComplete: () => pen.destroy(),
+      });
+      this.state.spawnTimer = wasBoss ? 0 : Math.min(Math.max(this.state.spawnTimer, 180), 360);
+    }
+
+    advanceLevel() {
+      this.state.level += 1;
+      this.state.segment = 0;
+      this.state.combo = 0;
+      this.state.runSpeed = Math.min(430, this.state.runSpeed + 18);
+      this.state.fireTimer = Math.min(this.state.fireTimer, 80);
+      this.state.spawnTimer = 999999;
+      this.floatText(`第${this.state.level}关`, this.width * 0.5, this.height * 0.38, "#ffffff");
+      this.floatText("新的虫群来了", this.width * 0.5, this.height * 0.38 + 44, "#f3c43b");
+      this.time.delayedCall(700, () => {
+        if (this.state.status !== "playing") return;
+        this.state.spawnTimer = 0;
+        if (!this.hasLiveCombatSequence()) this.spawnSegment();
+      });
     }
 
     dropCoins(x, y, amount, isBoss = false) {
@@ -774,66 +995,6 @@
         coin.vx = Phaser.Math.Between(-80, 80);
         coin.vy = Phaser.Math.Between(isBoss ? 10 : 20, isBoss ? 160 : 110);
         this.coinGroup.add(coin);
-      }
-    }
-
-    maybeSpawnBossRocks(boss) {
-      if (this.state.obstacleTimer > 0) return;
-      this.state.obstacleTimer = Phaser.Math.Between(1700, 2500);
-      const patterns = [
-        [-0.58, 0.58],
-        [-0.54],
-        [0.54],
-        [-0.66, 0.36],
-        [-0.36, 0.66],
-      ];
-      const lanes = patterns[Phaser.Math.Between(0, patterns.length - 1)];
-      for (let i = 0; i < lanes.length; i += 1) {
-        const rock = this.add.image(this.laneX(lanes[i]), -44 - i * 30, "rock").setDepth(3).setScale(Phaser.Math.FloatBetween(0.82, 1.08));
-        rock.kind = "rock";
-        rock.hit = false;
-        this.obstacleGroup.add(rock);
-      }
-      this.floatText("石头", boss.x, Math.max(84, boss.y + 70), "#7c776b");
-    }
-
-    updateBossAttack(enemy) {
-      if (this.time.now < enemy.nextShotAt) return;
-      const count = 9 + Math.min(8, this.state.bossCount * 2);
-      const baseSpeed = 230 + this.state.segment * 3;
-      for (let i = 0; i < count; i += 1) {
-        const t = count === 1 ? 0.5 : i / (count - 1);
-        const angle = Phaser.Math.DegToRad(58 + t * 64 + Phaser.Math.Between(-3, 3));
-        const shot = this.add.image(enemy.x, enemy.y + 30, "greenShot").setDepth(6).setScale(0.86);
-        shot.angle = Phaser.Math.RadToDeg(angle) - 90;
-        shot.vx = Math.cos(angle) * baseSpeed;
-        shot.vy = Math.sin(angle) * baseSpeed;
-        shot.damage = 1;
-        shot.expiresAt = this.time.now + 4200;
-        this.enemyShotGroup.add(shot);
-      }
-      enemy.nextShotAt = this.time.now + Phaser.Math.Between(1600, 2400);
-    }
-
-    updateEnemyShots(delta) {
-      const dt = delta / 1000;
-      const playerX = this.laneX(this.state.x);
-      const playerY = this.height - 118;
-      for (const shot of this.enemyShotGroup.getChildren()) {
-        if (!shot.active) continue;
-        shot.x += shot.vx * dt;
-        shot.y += shot.vy * dt;
-        if (shot.expiresAt <= this.time.now || shot.y > this.height + 90 || shot.x < -90 || shot.x > this.width + 90) {
-          shot.destroy();
-          continue;
-        }
-        if (Phaser.Math.Distance.Between(shot.x, shot.y, playerX, playerY) < 34) {
-          this.state.pigs -= shot.damage || 1;
-          this.floatText(`-${shot.damage || 1}`, playerX, playerY - 64, "#db6a55");
-          this.pop(shot.x, shot.y, 0x48ff3f, 8);
-          shot.destroy();
-          if (this.state.pigs <= 0) this.endGame(false);
-        }
       }
     }
 
@@ -890,7 +1051,7 @@
       showPanel(`
         <p class="kicker">${won ? "突围成功" : "猪群倒下"}</p>
         <h1>${won ? "胜利" : "失败"}</h1>
-        <p class="hint">金币 ${this.state.coins} · 攻击 ${this.state.attack}</p>
+        <p class="hint">第 ${this.state.level} 关 · 金币 ${this.state.coins} · 攻击 ${this.state.attack}</p>
         <button id="primaryButton" type="button">重新开始</button>
       `);
       panel.querySelector("#primaryButton").addEventListener("click", () => this.startGame());

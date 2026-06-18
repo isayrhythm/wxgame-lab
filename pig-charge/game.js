@@ -409,19 +409,24 @@
       if (this.state.segment >= 14 && this.state.segment % 14 === 0) this.spawnBoss();
       else if (mod === 1 || mod === 3) this.spawnGateRush();
       else if (mod === 2) {
-        this.spawnCoins();
-        if (this.state.segment > 2) this.spawnEnemyPack(-430);
+        this.spawnCoins(undefined, this.spawnTopY() + 80);
+        if (this.state.segment > 2) this.spawnEnemyPack(this.spawnTopY() - 430);
       }
       else if (mod === 4) {
-        this.spawnCoins(-0.62);
-        this.spawnCoins(0.62, -160);
+        this.spawnCoins(-0.62, this.spawnTopY() + 80);
+        this.spawnCoins(0.62, this.spawnTopY() - 160);
       }
       else this.spawnEnemyPack();
     }
 
+    spawnTopY() {
+      return -Math.max(320, this.height * 0.62);
+    }
+
     spawnGateRush() {
-      this.spawnGatePairV2(-92);
-      this.spawnEnemyPack(-520);
+      const gateY = this.spawnTopY() + 130;
+      this.spawnGatePairV2(gateY);
+      this.spawnEnemyPack(gateY - 520);
     }
 
     spawnGatePairV2(y = -70) {
@@ -491,7 +496,8 @@
       this.gateGroup.add(gate);
     }
 
-    spawnCoins(lane = Math.random() < 0.5 ? -0.42 : 0.42, yOffset = 0) {
+    spawnCoins(lane = Math.random() < 0.5 ? -0.42 : 0.42, yOffset = null) {
+      if (yOffset === null || yOffset === undefined) yOffset = this.spawnTopY() + 80;
       const curve = Math.random() < 0.5 ? -1 : 1;
       for (let i = 0; i < 28; i += 1) {
         const wave = Math.sin(i * 0.62) * 32 * curve;
@@ -503,7 +509,8 @@
       }
     }
 
-    spawnEnemyPack(yOffset = 0) {
+    spawnEnemyPack(yOffset = null) {
+      if (yOffset === null || yOffset === undefined) yOffset = this.spawnTopY();
       const amount = Math.min(42, 6 + Math.floor(this.state.segment * 0.95) + (this.state.level - 1) * 3);
       const penId = `zone-${this.state.segment}-${this.time.now}`;
       const cols = 6;
@@ -978,12 +985,17 @@
       this.state.runSpeed = Math.min(430, this.state.runSpeed + 18);
       this.state.fireTimer = Math.min(this.state.fireTimer, 80);
       this.state.spawnTimer = 999999;
+      this.gateGroup.clear(true, true);
+      this.enemyGroup.clear(true, true);
+      this.penGroup.clear(true, true);
+      this.obstacleGroup.clear(true, true);
+      this.playerShotGroup.clear(true, true);
+      this.enemyShotGroup.clear(true, true);
       this.floatText(`第${this.state.level}关`, this.width * 0.5, this.height * 0.38, "#ffffff");
       this.floatText("新的虫群来了", this.width * 0.5, this.height * 0.38 + 44, "#f3c43b");
       this.time.delayedCall(700, () => {
         if (this.state.status !== "playing") return;
-        this.state.spawnTimer = 0;
-        if (!this.hasLiveCombatSequence()) this.spawnSegment();
+        this.spawnSegment();
       });
     }
 

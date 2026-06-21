@@ -288,6 +288,120 @@ a {
   transform: translateY(-8px);
 }
 
+.snake-apple .scene {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.72), transparent 22%),
+    linear-gradient(180deg, #91cef5 0%, #c8ebcc 56%, #7fbd62 100%);
+}
+
+.snake-skyline {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 220px;
+  height: 58px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(135deg, transparent 0 46%, #eef2df 47% 58%, transparent 59%) 0 18px / 42px 34px repeat-x,
+    linear-gradient(180deg, transparent 0 62%, rgba(77, 137, 77, 0.45) 63% 100%);
+}
+
+.snake-field {
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  width: 76%;
+  height: 130px;
+  border-radius: 50% 50% 0 0;
+  background:
+    radial-gradient(circle at 35% 22%, rgba(255, 255, 255, 0.34), transparent 10%),
+    linear-gradient(180deg, #83c969, #4d9e4e);
+  transform: translateX(-50%) perspective(180px) rotateX(44deg);
+}
+
+.snake-windmill {
+  position: absolute;
+  right: 50px;
+  top: 42px;
+  width: 24px;
+  height: 58px;
+  border-radius: 10px 10px 3px 3px;
+  background: #f6f0db;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.08);
+}
+
+.snake-windmill::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 13px;
+  width: 54px;
+  height: 54px;
+  background:
+    linear-gradient(90deg, transparent 45%, #8a5a32 46% 54%, transparent 55%),
+    linear-gradient(0deg, transparent 45%, #8a5a32 46% 54%, transparent 55%);
+  transform: translate(-50%, -50%) rotate(18deg);
+}
+
+.snake-windmill::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  width: 34px;
+  height: 24px;
+  background: #2f8b65;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  transform: translateX(-50%);
+}
+
+.snake-body {
+  position: absolute;
+  left: 72px;
+  bottom: 42px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: rotate(-10deg);
+}
+
+.snake-body span {
+  width: 25px;
+  height: 22px;
+  border-radius: 50%;
+  background: #5ebd55;
+  box-shadow: inset -4px -4px 0 #2c7e3c;
+}
+
+.snake-body span:first-child {
+  width: 31px;
+  height: 27px;
+  background: #379447;
+}
+
+.snake-apple-preview,
+.snake-gold-preview {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.18);
+}
+
+.snake-apple-preview {
+  right: 86px;
+  bottom: 46px;
+  width: 24px;
+  height: 24px;
+  background: #e4443f;
+}
+
+.snake-gold-preview {
+  right: 44px;
+  bottom: 78px;
+  width: 34px;
+  height: 34px;
+  background: #ffc43d;
+}
+
 @media (max-width: 360px) {
   .portal {
     padding-left: 12px;

@@ -1,0 +1,115 @@
+:root {
+  --ink: #203025;
+  --muted: #5f735f;
+  --panel: rgba(255, 255, 255, 0.9);
+  --line: rgba(255, 255, 255, 0.78);
+  --shadow: rgba(31, 61, 42, 0.24);
+  --accent: #7bbf5f;
+  --kicker: #3d8f57;
+  --overlay-bg: linear-gradient(180deg, rgba(157, 210, 255, 0.08), rgba(38, 76, 48, 0.42));
+  --panel-shadow: rgba(24, 64, 40, 0.28);
+  --shell-bg: #8ed0ff;
+}
+
+body {
+  background: #8ed0ff;
+}
+
+.pill {
+  min-width: 86px;
+}
+
+.apple-pill {
+  left: 64px;
+}
+
+.length-pill {
+  right: 64px;
+}
+
+.buff-status {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  max-width: min(48vw, 360px);
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 10px 22px var(--shadow);
+  font-size: 13px;
+  font-weight: 900;
+  transform: translateX(-50%);
+  backdrop-filter: blur(10px);
+}
+
+.buff-status:empty {
+  display: none;
+}
+
+.buff-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.buff-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+}
+
+.buff-dot.blue {
+  background: radial-gradient(circle at 30% 28%, #d7f8ff 0 18%, #45bfff 20% 74%, #176ca8 76%);
+}
+
+.buff-dot.red {
+  background: radial-gradient(circle at 30% 28%, #ffe0d4 0 18%, #f06040 20% 74%, #9c271d 76%);
+}
+
+.apple-dot,
+.snake-dot {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.apple-dot {
+  background: radial-gradient(circle at 35% 26%, #ffd9d6 0 18%, #e4453d 20% 74%, #9d1f1f 76%);
+}
+
+.snake-dot {
+  background: radial-gradient(circle at 32% 28%, #dcffd2 0 18%, #5ebd55 20% 72%, #2c7e3c 74%);
+}
+
+#gameCanvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+#gameCanvas:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 360px) {
+  .apple-pill {
+    left: 58px;
+  }
+
+  .pill {
+    min-width: 76px;
+    padding: 0 10px;
+  }
+
+  .buff-status {
+    top: calc(env(safe-area-inset-top) + 56px);
+    max-width: calc(100vw - 28px);
+  }
+}

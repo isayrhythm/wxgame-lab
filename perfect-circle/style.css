@@ -2,7 +2,7 @@
 * { box-sizing:border-box; }
 html,body { width:100%; height:100%; margin:0; overflow:hidden; touch-action:none; user-select:none; }
 body { font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:#dcebdd; }
-.circle-game { position:relative; display:grid; grid-template-rows:auto minmax(260px,1fr) auto auto; gap:14px; width:min(100%,520px); height:100dvh; min-height:560px; margin:auto; padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px); background:linear-gradient(180deg,#edf5e9,#d8eadb); }
+.circle-game { position:relative; display:grid; grid-template-rows:auto auto auto auto; align-content:start; gap:14px; width:min(100%,520px); height:100dvh; min-height:560px; margin:auto; padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px); background:linear-gradient(180deg,#edf5e9,#d8eadb); }
 .home-link { position:absolute; top:calc(env(safe-area-inset-top) + 14px); left:14px; z-index:3; display:grid; place-items:center; width:40px; height:40px; border:1px solid rgba(23,38,32,.12); border-radius:8px; background:rgba(255,255,255,.72); color:var(--ink); font-size:30px; font-weight:900; line-height:1; text-decoration:none; box-shadow:0 8px 18px rgba(38,72,54,.12); }
 .best-score { position:absolute; top:calc(env(safe-area-inset-top) + 15px); right:16px; height:38px; padding:8px 11px; border-radius:8px; background:rgba(255,255,255,.62); color:#587066; font-size:13px; }
 .best-score strong { color:var(--green); font-size:18px; }
@@ -10,7 +10,7 @@ header { padding:48px 4px 0; text-align:center; }
 header p { margin:0 0 5px; color:var(--green); font-size:12px; font-weight:900; }
 h1 { margin:0; font-size:35px; line-height:1.05; letter-spacing:0; }
 header span { display:block; margin-top:7px; color:#60736a; font-size:14px; }
-.drawing-board { position:relative; min-height:0; overflow:hidden; border:1px solid rgba(255,255,255,.9); border-radius:8px; background:var(--paper); box-shadow:0 18px 40px rgba(42,76,57,.16),inset 0 0 0 1px rgba(46,91,66,.04); touch-action:none; }
+.drawing-board { position:relative; justify-self:center; width:min(100%,430px,calc(100dvh - 300px)); min-width:260px; aspect-ratio:1; overflow:hidden; border:1px solid rgba(255,255,255,.9); border-radius:8px; background:var(--paper); box-shadow:0 18px 40px rgba(42,76,57,.16),inset 0 0 0 1px rgba(46,91,66,.04); touch-action:none; }
 .drawing-board::before { content:""; position:absolute; inset:18px; border:1px dashed rgba(48,90,68,.12); border-radius:50%; pointer-events:none; }
 #circleCanvas { position:absolute; inset:0; width:100%; height:100%; }
 .idle-hint { position:absolute; inset:0; display:grid; place-content:center; gap:7px; color:#84968d; text-align:center; pointer-events:none; transition:opacity .2s; }
@@ -21,4 +21,4 @@ header span { display:block; margin-top:7px; color:#60736a; font-size:14px; }
 .score { display:flex; align-items:baseline; color:var(--green); }.score strong { font-size:52px; line-height:.9; }.score span { margin-left:3px; font-weight:800; }.result p { margin:0; font-size:19px; font-weight:900; }
 .metrics { grid-column:1/-1; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }.metrics span { padding:8px 4px; border-radius:6px; background:rgba(255,255,255,.58); color:#60736a; font-size:12px; text-align:center; }.metrics b { display:block; margin-top:2px; color:var(--ink); font-size:15px; }
 .retry-button { display:none; width:100%; min-height:48px; border:0; border-radius:8px; background:var(--green); color:white; font:900 16px inherit; box-shadow:inset 0 -3px rgba(0,0,0,.15),0 10px 22px rgba(36,166,106,.22); }.circle-game:has(.scored) .retry-button { display:block; }
-@media (max-height:680px) { .circle-game{gap:10px;padding-top:calc(env(safe-area-inset-top) + 10px)} header{padding-top:40px} h1{font-size:29px}.score strong{font-size:44px} }
+@media (max-height:680px) { .circle-game{gap:10px;padding-top:calc(env(safe-area-inset-top) + 10px)} header{padding-top:40px} h1{font-size:29px}.score strong{font-size:44px}.drawing-board{min-width:220px} }

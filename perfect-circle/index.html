@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>画个圆</title>
+    <link rel="stylesheet" href="../shared/game-ui.css?v=2026061001" />
+    <link rel="stylesheet" href="./style.css?v=2026071001" />
+  </head>
+  <body>
+    <main class="circle-game">
+      <a class="home-link" href="../" aria-label="返回小游戏大厅">‹</a>
+      <div class="best-score">最高 <strong id="bestScore">--</strong></div>
+      <header><p>PERFECT CIRCLE</p><h1>画个圆</h1><span id="tip">按住屏幕，一笔画出你心里的圆</span></header>
+      <section class="drawing-board" id="drawingBoard">
+        <canvas id="circleCanvas"></canvas><div class="start-mark" id="startMark"></div>
+        <div class="idle-hint"><b>+</b><span>从任意位置开始</span></div>
+      </section>
+      <section class="result" id="result" aria-live="polite">
+        <div class="score"><strong id="score">0</strong><span>分</span></div><p id="verdict">再来一笔</p>
+        <div class="metrics"><span>圆度 <b id="roundness">0%</b></span><span>闭合 <b id="closure">0%</b></span><span>完整 <b id="coverage">0%</b></span></div>
+      </section>
+      <button id="retryButton" class="retry-button" type="button">再画一次</button>
+    </main>
+    <script src="./game.js?v=2026071001"></script>
+  </body>
+</html>

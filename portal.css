@@ -402,6 +402,11 @@ a {
   background: #ffc43d;
 }
 
+.perfect-circle .scene { background:linear-gradient(145deg,#f7faf5,#dcebdd); }
+.circle-preview { position:absolute;left:50%;top:50%;width:116px;height:116px;border:8px solid #24a66a;border-radius:50%;transform:translate(-50%,-50%) rotate(-7deg);box-shadow:0 10px 22px rgba(36,166,106,.2); }
+.circle-score { position:absolute;left:50%;top:50%;color:#172620;font-size:36px;font-weight:900;transform:translate(-50%,-50%); }
+.circle-pencil { position:absolute;left:calc(50% + 48px);top:calc(50% + 39px);width:52px;height:9px;border-radius:3px;background:#f08e3d;transform:rotate(-45deg);box-shadow:inset -8px 0 #263832; }
+
 @media (max-width: 360px) {
   .portal {
     padding-left: 12px;

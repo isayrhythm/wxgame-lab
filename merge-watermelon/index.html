@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <title>合成大西瓜</title>
     <link rel="stylesheet" href="../shared/game-ui.css?v=2026061001" />
-    <link rel="stylesheet" href="./style.css?v=2026071004" />
+    <link rel="stylesheet" href="./style.css?v=2026071005" />
   </head>
   <body>
     <main class="game-shell">
@@ -27,10 +27,12 @@
           <h1 id="overlayTitle">合成大西瓜</h1>
           <p id="overlayText" class="hint">左右拖动选择位置，松手落下水果；按住 1 秒可以连续投放。两个相同水果碰在一起，就会合成更大的水果。</p>
           <button id="primaryButton" type="button">开始游戏</button>
+          <button id="reviewButton" class="review-button hidden" type="button">回看布局</button>
         </div>
       </section>
+      <button id="reviewReturnButton" class="review-return hidden" type="button">返回结算</button>
     </main>
     <script src="../shared/vendor/phaser-3.90.0.min.js"></script>
-    <script src="./game.js?v=2026071009"></script>
+    <script src="./game.js?v=2026071010"></script>
   </body>
 </html>

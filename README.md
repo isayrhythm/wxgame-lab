@@ -30,6 +30,9 @@ https://isayrhythm.github.io/wxgame-lab/
 - **合成大西瓜** (`merge-watermelon/`)
   左右拖动并落下水果，相同水果碰撞后会逐级合成，挑战更高分和大西瓜。
 
+- **物种起源** (`origin-species/`)
+  操控变形虫探索无限微生态，吞噬比自己弱小的生物积累变异，并在每次变异固定时选择新的进化分支。
+
 ## 本地运行
 
 这个项目是静态页面，可以直接用任意静态服务器打开。示例：
@@ -53,5 +56,6 @@ pig-charge/      猪群突围
 snake-apple-3d/  贪吃蛇吃苹果
 perfect-circle/   画个圆
 merge-watermelon/ 合成大西瓜
+origin-species/    物种起源
 shared/          公共 UI、本地 Phaser 3 与 Three.js
 ```

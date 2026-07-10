@@ -413,6 +413,13 @@ a {
 .melon-big { left:50%;bottom:12px;width:86px;height:86px;border:4px solid rgba(255,255,255,.9);background:url("./merge-watermelon/assets/patterns/pattern-10.webp") center/cover;transform:translateX(-50%); }
 .melon-small { width:42px;height:42px;border:3px solid rgba(255,255,255,.9);background:center/cover;box-shadow:0 5px 10px rgba(71,66,42,.18); }.melon-small.one{left:80px;top:36px;background-image:url("./merge-watermelon/assets/patterns/pattern-01.webp")}.melon-small.two{right:72px;top:57px;background-image:url("./merge-watermelon/assets/patterns/pattern-02.webp")}.merge-spark{position:absolute;left:50%;top:36px;color:#fff;font-size:34px;font-weight:900;text-shadow:0 3px 12px #ef8a42;transform:translateX(-50%)}
 
+.origin-species .scene { background:#0b3935 url("./origin-species/assets/microcosm-bg.webp") center/cover; }
+.microbe-field { position:absolute;inset:0;background:rgba(5,34,30,.2); }
+.amoeba-preview { position:absolute;left:50%;top:52%;width:76px;height:70px;border:3px solid rgba(230,255,248,.85);border-radius:46% 54% 42% 58% / 58% 38% 62% 42%;background:rgba(93,218,194,.82);box-shadow:0 0 18px rgba(99,235,207,.65);transform:translate(-50%,-50%) rotate(12deg); }
+.amoeba-preview::before,.amoeba-preview::after{content:"";position:absolute;width:23px;height:19px;border-radius:50%;background:rgba(91,214,190,.84)}.amoeba-preview::before{left:-12px;top:12px}.amoeba-preview::after{right:-13px;bottom:10px}.amoeba-preview i{position:absolute;left:31px;top:24px;width:18px;height:18px;border-radius:50%;background:#345c67}
+.bacteria-preview { position:absolute;width:25px;height:10px;border:2px solid #fff2a7;border-radius:8px;background:#e7c65a;box-shadow:0 0 8px rgba(242,189,85,.5);transform:rotate(-25deg)}.bacteria-preview.one{left:62px;top:36px}.bacteria-preview.two{right:71px;top:52px;transform:rotate(38deg)}.bacteria-preview.three{left:88px;bottom:28px;transform:rotate(8deg)}
+.evolve-preview { position:absolute;right:16px;bottom:14px;padding:5px 7px;border:1px solid rgba(190,239,222,.48);border-radius:5px;background:rgba(4,29,26,.74);color:#73e3cc;font-size:10px;font-weight:900; }
+
 @media (max-width: 360px) {
   .portal {
     padding-left: 12px;

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>物种起源</title>
+    <link rel="stylesheet" href="./style.css?v=2026071010" />
+  </head>
+  <body>
+    <main class="origin-shell">
+      <div id="game" aria-label="无限微生态地图"></div>
+
+      <a class="icon-button home-link" href="../" aria-label="返回小游戏大厅">←</a>
+      <button id="pauseButton" class="icon-button pause-button" type="button" aria-label="暂停">Ⅱ</button>
+
+      <section class="resource-hud" aria-live="polite">
+        <div class="health-chip">
+          <small>生命</small>
+          <span class="health-track"><i id="healthFill"></i></span>
+          <strong id="healthValue">100</strong>
+        </div>
+        <div><small>吞噬</small><strong id="eatenValue">0</strong></div>
+        <div><small>生物量</small><strong id="biomassValue">0</strong></div>
+      </section>
+
+      <section class="evolution-hud">
+        <div><span id="lineageName">自由生活变形虫</span><b id="biomeName">营养斑块</b></div>
+        <div class="mutation-row">
+          <small>下一次变异</small>
+          <span class="mutation-track"><i id="mutationFill"></i></span>
+          <strong id="mutationValue">0 / 28</strong>
+        </div>
+      </section>
+
+      <button id="treeButton" class="tree-button" type="button">
+        <span class="branch-icon" aria-hidden="true">⌘</span>
+        <span>进化树</span>
+        <b id="evolutionLevel">0</b>
+      </button>
+
+      <div id="joystick" class="joystick hidden" aria-hidden="true"><i></i></div>
+      <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+      <section id="introOverlay" class="overlay intro-overlay">
+        <div class="intro-card">
+          <p class="kicker">ENDLESS MICRO WORLD</p>
+          <h1>物种起源</h1>
+          <p>拖动变形虫探索无限微生态。吞掉比你弱小的生物，躲开更强的捕食者；变异积累满后，亲手选择下一条进化分支。</p>
+          <div class="rule-strip">
+            <span><i class="weak-dot"></i>小于你：可吞噬</span>
+            <span><i class="danger-dot"></i>大于你：会受伤</span>
+          </div>
+          <button id="startButton" class="primary-button" type="button">开始进化</button>
+        </div>
+      </section>
+
+      <section id="evolutionOverlay" class="overlay evolution-overlay hidden" aria-label="选择进化分支">
+        <div class="evolution-sheet">
+          <header>
+            <p class="kicker">MUTATION FIXED</p>
+            <h2>选择进化分支</h2>
+            <p>这次选择会改变形态和捕食方式，也会影响后续出现的分支。</p>
+          </header>
+          <div id="evolutionChoices" class="evolution-choices"></div>
+        </div>
+      </section>
+
+      <section id="treePanel" class="tree-panel hidden" aria-label="完整进化树">
+        <header>
+          <div><small>EVOLUTION TREE</small><h2>你的进化路线</h2></div>
+          <button id="closeTreeButton" class="close-button" type="button" aria-label="关闭">×</button>
+        </header>
+        <div id="chosenPath" class="chosen-path"></div>
+        <div id="treeStages" class="tree-stages"></div>
+      </section>
+
+      <section id="pauseOverlay" class="overlay simple-overlay hidden">
+        <div class="simple-card">
+          <p class="kicker">PAUSED</p>
+          <h2>暂停</h2>
+          <p>微生态暂时静止了。</p>
+          <button id="resumeButton" class="primary-button" type="button">继续探索</button>
+          <a class="secondary-button" href="../">返回大厅</a>
+        </div>
+      </section>
+
+      <section id="gameOverOverlay" class="overlay simple-overlay hidden">
+        <div class="simple-card">
+          <p class="kicker">LINEAGE ENDED</p>
+          <h2>这条谱系终止了</h2>
+          <p id="gameOverSummary">吞噬 0 个生物，完成 0 次进化。</p>
+          <div id="finalPath" class="final-path"></div>
+          <button id="restartButton" class="primary-button" type="button">重新开始</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="../shared/vendor/phaser-3.90.0.min.js"></script>
+    <script src="./game.js?v=2026071017"></script>
+  </body>
+</html>

@@ -410,8 +410,8 @@ a {
 .watermelon .scene { background:linear-gradient(180deg,#bfe8dc 0%,#f9edbd 62%,#d69a5c 100%); }
 .melon-bin { position:absolute;left:50%;bottom:-15px;width:72%;height:112px;border:7px solid #a96c3f;border-top:0;border-radius:0 0 22px 22px;background:rgba(255,250,225,.55);transform:translateX(-50%); }
 .melon { position:absolute;border-radius:50%;box-shadow:inset -7px -8px 0 rgba(25,90,52,.22),0 7px 12px rgba(71,66,42,.16); }
-.melon-big { left:50%;bottom:12px;width:86px;height:86px;background:repeating-linear-gradient(90deg,#3ca768 0 13px,#247c4e 14px 19px);transform:translateX(-50%); }
-.melon-small { width:42px;height:42px;background:#f08e88;box-shadow:inset -5px -6px 0 rgba(177,69,74,.2),0 5px 10px rgba(71,66,42,.14); }.melon-small.one{left:80px;top:36px}.melon-small.two{right:72px;top:57px}.merge-spark{position:absolute;left:50%;top:36px;color:#fff;font-size:34px;font-weight:900;text-shadow:0 3px 12px #ef8a42;transform:translateX(-50%)}
+.melon-big { left:50%;bottom:12px;width:86px;height:86px;border:4px solid rgba(255,255,255,.9);background:url("./merge-watermelon/assets/patterns/pattern-10.webp") center/cover;transform:translateX(-50%); }
+.melon-small { width:42px;height:42px;border:3px solid rgba(255,255,255,.9);background:center/cover;box-shadow:0 5px 10px rgba(71,66,42,.18); }.melon-small.one{left:80px;top:36px;background-image:url("./merge-watermelon/assets/patterns/pattern-01.webp")}.melon-small.two{right:72px;top:57px;background-image:url("./merge-watermelon/assets/patterns/pattern-02.webp")}.merge-spark{position:absolute;left:50%;top:36px;color:#fff;font-size:34px;font-weight:900;text-shadow:0 3px 12px #ef8a42;transform:translateX(-50%)}
 
 @media (max-width: 360px) {
   .portal {

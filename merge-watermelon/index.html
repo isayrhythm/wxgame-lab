@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>合成大西瓜</title>
+    <link rel="stylesheet" href="../shared/game-ui.css?v=2026061001" />
+    <link rel="stylesheet" href="./style.css?v=2026071002" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <div id="game"></div>
+      <a class="home-link" href="../" aria-label="返回小游戏大厅">‹</a>
+      <button id="pauseButton" class="pause-button" type="button" aria-label="暂停">Ⅱ</button>
+
+      <section class="hud" aria-live="polite">
+        <div class="score-box"><small>分数</small><strong id="score">0</strong></div>
+        <div class="best-box"><small>最高</small><strong id="best">0</strong></div>
+        <div class="next-box"><small>下一个</small><canvas id="nextFruit" width="56" height="56"></canvas></div>
+      </section>
+
+      <div class="danger-label">不要堆到这里</div>
+
+      <section id="overlay" class="overlay">
+        <div class="panel">
+          <p class="kicker">FRUIT MERGE</p>
+          <h1 id="overlayTitle">合成大西瓜</h1>
+          <p id="overlayText" class="hint">左右拖动选择位置，松手落下水果。两个相同水果碰在一起，就会合成更大的水果。</p>
+          <button id="primaryButton" type="button">开始游戏</button>
+        </div>
+      </section>
+    </main>
+    <script src="../shared/vendor/phaser-3.90.0.min.js"></script>
+    <script src="./game.js?v=2026071002"></script>
+  </body>
+</html>

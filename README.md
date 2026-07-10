@@ -27,6 +27,9 @@ https://isayrhythm.github.io/wxgame-lab/
 - **画个圆** (`perfect-circle/`)
   用鼠标或手指一笔画圆，根据圆度、闭合度和完整度即时评分，并记录本机最高分。
 
+- **合成大西瓜** (`merge-watermelon/`)
+  左右拖动并落下水果，相同水果碰撞后会逐级合成，挑战更高分和大西瓜。
+
 ## 本地运行
 
 这个项目是静态页面，可以直接用任意静态服务器打开。示例：
@@ -49,5 +52,6 @@ shooter/         企鹅打枪
 pig-charge/      猪群突围
 snake-apple-3d/  贪吃蛇吃苹果
 perfect-circle/   画个圆
+merge-watermelon/ 合成大西瓜
 shared/          公共 UI、本地 Phaser 3 与 Three.js
 ```

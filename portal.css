@@ -407,6 +407,12 @@ a {
 .circle-score { position:absolute;left:50%;top:50%;color:#172620;font-size:36px;font-weight:900;transform:translate(-50%,-50%); }
 .circle-pencil { position:absolute;left:calc(50% + 48px);top:calc(50% + 39px);width:52px;height:9px;border-radius:3px;background:#f08e3d;transform:rotate(-45deg);box-shadow:inset -8px 0 #263832; }
 
+.watermelon .scene { background:linear-gradient(180deg,#bfe8dc 0%,#f9edbd 62%,#d69a5c 100%); }
+.melon-bin { position:absolute;left:50%;bottom:-15px;width:72%;height:112px;border:7px solid #a96c3f;border-top:0;border-radius:0 0 22px 22px;background:rgba(255,250,225,.55);transform:translateX(-50%); }
+.melon { position:absolute;border-radius:50%;box-shadow:inset -7px -8px 0 rgba(25,90,52,.22),0 7px 12px rgba(71,66,42,.16); }
+.melon-big { left:50%;bottom:12px;width:86px;height:86px;background:repeating-linear-gradient(90deg,#3ca768 0 13px,#247c4e 14px 19px);transform:translateX(-50%); }
+.melon-small { width:42px;height:42px;background:#f08e88;box-shadow:inset -5px -6px 0 rgba(177,69,74,.2),0 5px 10px rgba(71,66,42,.14); }.melon-small.one{left:80px;top:36px}.melon-small.two{right:72px;top:57px}.merge-spark{position:absolute;left:50%;top:36px;color:#fff;font-size:34px;font-weight:900;text-shadow:0 3px 12px #ef8a42;transform:translateX(-50%)}
+
 @media (max-width: 360px) {
   .portal {
     padding-left: 12px;

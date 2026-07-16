@@ -413,12 +413,37 @@ a {
 .melon-big { left:50%;bottom:12px;width:86px;height:86px;border:4px solid rgba(255,255,255,.9);background:url("./merge-watermelon/assets/patterns/pattern-10.webp") center/cover;transform:translateX(-50%); }
 .melon-small { width:42px;height:42px;border:3px solid rgba(255,255,255,.9);background:center/cover;box-shadow:0 5px 10px rgba(71,66,42,.18); }.melon-small.one{left:80px;top:36px;background-image:url("./merge-watermelon/assets/patterns/pattern-01.webp")}.melon-small.two{right:72px;top:57px;background-image:url("./merge-watermelon/assets/patterns/pattern-02.webp")}.merge-spark{position:absolute;left:50%;top:36px;color:#fff;font-size:34px;font-weight:900;text-shadow:0 3px 12px #ef8a42;transform:translateX(-50%)}
 
-.origin-species .scene { background:#0b3935 url("./origin-species/assets/microcosm-bg.webp") center/cover; }
+.origin-species .scene { background:#0b3935 url("./origin-species/assets/micro-world.svg") repeat; }
 .microbe-field { position:absolute;inset:0;background:rgba(5,34,30,.2); }
 .amoeba-preview { position:absolute;left:50%;top:52%;width:76px;height:70px;border:3px solid rgba(230,255,248,.85);border-radius:46% 54% 42% 58% / 58% 38% 62% 42%;background:rgba(93,218,194,.82);box-shadow:0 0 18px rgba(99,235,207,.65);transform:translate(-50%,-50%) rotate(12deg); }
 .amoeba-preview::before,.amoeba-preview::after{content:"";position:absolute;width:23px;height:19px;border-radius:50%;background:rgba(91,214,190,.84)}.amoeba-preview::before{left:-12px;top:12px}.amoeba-preview::after{right:-13px;bottom:10px}.amoeba-preview i{position:absolute;left:31px;top:24px;width:18px;height:18px;border-radius:50%;background:#345c67}
 .bacteria-preview { position:absolute;width:25px;height:10px;border:2px solid #fff2a7;border-radius:8px;background:#e7c65a;box-shadow:0 0 8px rgba(242,189,85,.5);transform:rotate(-25deg)}.bacteria-preview.one{left:62px;top:36px}.bacteria-preview.two{right:71px;top:52px;transform:rotate(38deg)}.bacteria-preview.three{left:88px;bottom:28px;transform:rotate(8deg)}
 .evolve-preview { position:absolute;right:16px;bottom:14px;padding:5px 7px;border:1px solid rgba(190,239,222,.48);border-radius:5px;background:rgba(4,29,26,.74);color:#73e3cc;font-size:10px;font-weight:900; }
+
+.monopoly .scene {
+  background:
+    linear-gradient(rgba(226, 243, 235, .78), rgba(192, 224, 218, .82)),
+    url("./monopoly/assets/city-pattern.svg") repeat;
+}
+
+.city-board {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 142px;
+  height: 142px;
+  border: 24px solid #f1e1ae;
+  border-radius: 8px;
+  background: #76b797;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.86), 0 14px 24px rgba(34,80,75,.22);
+  transform: translate(-50%, -50%) rotate(-5deg);
+}
+
+.city-board i { position:absolute;width:22px;height:22px;border:2px solid #fff7dd;background:#e36e5a;box-shadow:inset 0 -5px rgba(81,40,34,.16); }
+.city-board i:nth-child(1){left:-22px;top:-22px}.city-board i:nth-child(2){left:12px;top:-22px;background:#e6ad3e}.city-board i:nth-child(3){right:-22px;top:-22px;background:#6672bd}.city-board i:nth-child(4){right:-22px;top:12px;background:#a75e9d}.city-board i:nth-child(5){right:-22px;bottom:-22px;background:#d4544c}.city-board i:nth-child(6){left:12px;bottom:-22px;background:#536d7c}.city-board i:nth-child(7){left:-22px;bottom:-22px;background:#3f9ca8}.city-board i:nth-child(8){left:-22px;top:12px;background:#e7a63d}
+.city-board b { position:absolute;left:50%;top:50%;display:grid;place-items:center;width:42px;height:42px;border-radius:8px;background:#fffdf5;color:#d95849;font-size:24px;transform:translate(-50%,-50%) rotate(7deg);box-shadow:0 7px 12px rgba(35,69,65,.16) }
+.city-board em { position:absolute;display:grid;place-items:center;width:25px;height:25px;border:3px solid #fff;border-radius:50%;color:#fff;font-size:10px;font-style:normal;font-weight:900;box-shadow:0 4px 9px rgba(27,55,55,.24)}
+.token-one{right:-30px;bottom:8px;background:#e56152}.token-two{left:-27px;top:15px;background:#327ea4}.city-money{position:absolute;right:42px;top:26px;padding:5px 7px;border-radius:6px;background:#fff;color:#24835d;font-size:12px;font-weight:900;box-shadow:0 7px 14px rgba(29,61,66,.14);transform:rotate(4deg)}
 
 @media (max-width: 360px) {
   .portal {

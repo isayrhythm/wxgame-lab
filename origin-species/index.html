@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <title>物种起源</title>
-    <link rel="stylesheet" href="./style.css?v=2026071010" />
+    <link rel="stylesheet" href="./style.css?v=2026071102" />
   </head>
   <body>
     <main class="origin-shell">
@@ -19,14 +19,14 @@
           <span class="health-track"><i id="healthFill"></i></span>
           <strong id="healthValue">100</strong>
         </div>
-        <div><small>吞噬</small><strong id="eatenValue">0</strong></div>
-        <div><small>生物量</small><strong id="biomassValue">0</strong></div>
+        <div><small>收集</small><strong id="eatenValue">0</strong></div>
+        <div><small>能量</small><strong id="biomassValue">0</strong></div>
       </section>
 
       <section class="evolution-hud">
-        <div><span id="lineageName">自由生活变形虫</span><b id="biomeName">营养斑块</b></div>
+        <div><span id="lineageName">核苷酸与短肽体系</span><b id="biomeName">营养斑块</b></div>
         <div class="mutation-row">
-          <small>下一次变异</small>
+          <small>下一次进化</small>
           <span class="mutation-track"><i id="mutationFill"></i></span>
           <strong id="mutationValue">0 / 28</strong>
         </div>
@@ -45,10 +45,10 @@
         <div class="intro-card">
           <p class="kicker">ENDLESS MICRO WORLD</p>
           <h1>物种起源</h1>
-          <p>拖动变形虫探索无限微生态。吞掉比你弱小的生物，躲开更强的捕食者；变异积累满后，亲手选择下一条进化分支。</p>
+          <p>从前生命分子体系开始，吸收适合当前谱系的资源积累能量。沿着自复制、细胞化和多细胞化不断分支，最终走向不同的类群与物种。</p>
           <div class="rule-strip">
-            <span><i class="weak-dot"></i>小于你：可吞噬</span>
-            <span><i class="danger-dot"></i>大于你：会受伤</span>
+            <span><i class="weak-dot"></i>适配资源：高能量</span>
+            <span><i class="danger-dot"></i>危险生物：会受伤</span>
           </div>
           <button id="startButton" class="primary-button" type="button">开始进化</button>
         </div>
@@ -57,9 +57,9 @@
       <section id="evolutionOverlay" class="overlay evolution-overlay hidden" aria-label="选择进化分支">
         <div class="evolution-sheet">
           <header>
-            <p class="kicker">MUTATION FIXED</p>
+            <p class="kicker">EVOLUTION READY</p>
             <h2>选择进化分支</h2>
-            <p>这次选择会改变形态和捕食方式，也会影响后续出现的分支。</p>
+            <p>这里只显示当前谱系能够到达的直接后代，选择后会改变形态、食物偏好和后续路线。</p>
           </header>
           <div id="evolutionChoices" class="evolution-choices"></div>
         </div>
@@ -67,7 +67,7 @@
 
       <section id="treePanel" class="tree-panel hidden" aria-label="完整进化树">
         <header>
-          <div><small>EVOLUTION TREE</small><h2>你的进化路线</h2></div>
+          <div><small>EVOLUTION TREE</small><h2>生命谱系树</h2></div>
           <button id="closeTreeButton" class="close-button" type="button" aria-label="关闭">×</button>
         </header>
         <div id="chosenPath" class="chosen-path"></div>
@@ -96,6 +96,6 @@
     </main>
 
     <script src="../shared/vendor/phaser-3.90.0.min.js"></script>
-    <script src="./game.js?v=2026071017"></script>
+    <script src="./game.js?v=2026071106"></script>
   </body>
 </html>

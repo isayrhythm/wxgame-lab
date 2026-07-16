@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#2b2b2b" />
+    <title>学术圈 · 好友联机</title>
+    <link rel="stylesheet" href="./style.css?v=2026071615" />
+    <link rel="stylesheet" href="./online.css?v=2026071609" />
+  </head>
+  <body>
+    <main class="monopoly-shell online-shell">
+      <header class="top-hud">
+        <a class="icon-button home-link" href="./" aria-label="返回学术圈">‹</a>
+        <div class="cash-chip"><small>科研经费</small><strong>¥<span id="playerCash">1800</span></strong></div>
+        <div class="round-chip"><small>时间</small><strong id="roundValue">1月上半月</strong></div>
+        <button id="pauseButton" class="icon-button pause-button" type="button" aria-label="暂停">Ⅱ</button>
+      </header>
+
+      <section id="boardWrap" class="board-wrap" aria-label="联机学术圈棋盘">
+        <canvas id="boardCanvas"></canvas>
+        <div class="board-center">
+          <p id="turnName">等待房间开局</p>
+          <button id="rollButton" class="roll-button" type="button" aria-label="掷骰子" disabled>
+            <span id="dice" class="dice" aria-hidden="true"></span>
+            <strong>掷骰子</strong>
+          </button>
+          <small id="turnHint">房间状态由服务器同步</small>
+          <span id="turnTimer" class="turn-timer hidden">15s</span>
+        </div>
+        <div id="moneyFx" class="money-fx" aria-live="polite"></div>
+      </section>
+
+      <section id="playerStrip" class="player-strip online-player-strip" aria-label="联机玩家"></section>
+
+      <section class="city-feed" aria-label="学术动态">
+        <header><strong>学术动态</strong><span class="connection-state"><i id="connectionDot"></i><b id="connectionText">未连接</b></span><span>基金池 <b>¥<span id="jackpotValue">180</span></b></span></header>
+        <div id="feedList" class="feed-list"></div>
+      </section>
+
+      <section class="action-dock">
+        <button id="assetsButton" class="assets-button" type="button">
+          <span aria-hidden="true">▤</span><strong>我的论文</strong><small id="assetCount">0 篇论文</small>
+        </button>
+        <div class="turn-log"><small>当前行动</small><p id="logText">创建房间或输入房间码加入好友。</p></div>
+      </section>
+
+      <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+      <section id="lobbyOverlay" class="overlay lobby-overlay">
+        <div class="lobby-panel">
+          <section id="roomSetup">
+            <div class="online-logo" aria-hidden="true"><i></i><i></i><i></i><b>↔</b></div>
+            <p class="kicker">ONLINE ROOM</p>
+            <h1>学术圈联机</h1>
+            <p>最多 7 位学者同局；少于 3 人也能开，系统会自动补电脑对手。每 24 回合评一次帽子，游戏逐年继续。</p>
+            <label class="field-label" for="playerName">你的昵称</label>
+            <input id="playerName" class="text-input" maxlength="10" autocomplete="nickname" placeholder="输入昵称" value="玩家" />
+            <div class="avatar-section online-avatar-section">
+              <span>选择头像</span>
+              <div id="avatarPicker" class="avatar-picker" aria-label="选择玩家头像">
+                <button class="selected" data-avatar="avatar-01" type="button" aria-label="头像 1"><img src="./assets/avatars/avatar-01.jpg" alt="" /></button>
+                <button data-avatar="avatar-02" type="button" aria-label="头像 2"><img src="./assets/avatars/avatar-02.jpg" alt="" /></button>
+                <button data-avatar="avatar-03" type="button" aria-label="头像 3"><img src="./assets/avatars/avatar-03.jpg" alt="" /></button>
+                <button data-avatar="avatar-04" type="button" aria-label="头像 4"><img src="./assets/avatars/avatar-04.jpg" alt="" /></button>
+                <button data-avatar="avatar-05" type="button" aria-label="头像 5"><img src="./assets/avatars/avatar-05.jpg" alt="" /></button>
+                <button data-avatar="avatar-06" type="button" aria-label="头像 6"><img src="./assets/avatars/avatar-06.jpg" alt="" /></button>
+                <button data-avatar="avatar-07" type="button" aria-label="头像 7"><img src="./assets/avatars/avatar-07.png" alt="" /></button>
+                <button data-avatar="avatar-08" type="button" aria-label="头像 8"><img src="./assets/avatars/avatar-08.jpg" alt="" /></button>
+                <button data-avatar="avatar-09" type="button" aria-label="头像 9"><img src="./assets/avatars/avatar-09.jpg" alt="" /></button>
+                <button data-avatar="avatar-10" type="button" aria-label="头像 10"><img src="./assets/avatars/avatar-10.jpg" alt="" /></button>
+              </div>
+            </div>
+            <button id="createRoomButton" class="primary-button" type="button">创建房间</button>
+            <div class="join-divider"><span>加入已有房间</span></div>
+            <div class="join-row">
+              <input id="roomCodeInput" class="text-input room-code-input" maxlength="6" inputmode="text" autocomplete="off" placeholder="房间码" />
+              <button id="joinRoomButton" type="button">加入</button>
+            </div>
+            <p id="lobbyError" class="lobby-error hidden"></p>
+          </section>
+
+          <section id="roomWaiting" class="room-waiting hidden">
+            <p class="kicker">ROOM READY</p>
+            <h2>等待好友</h2>
+            <p>让好友打开联机入口并输入房间码。</p>
+            <button id="copyRoomButton" class="room-code-button" type="button"><small>房间码</small><strong id="roomCodeValue">------</strong><span>点击复制邀请</span></button>
+            <div id="lobbyPlayers" class="lobby-players"></div>
+            <button id="startOnlineButton" class="primary-button" type="button" disabled>开始游戏 · 补 2 位对手</button>
+            <button id="leaveRoomButton" class="secondary-button" type="button">离开房间</button>
+          </section>
+        </div>
+      </section>
+
+      <section id="propertyOverlay" class="overlay sheet-overlay hidden" aria-label="期刊投稿">
+        <div class="property-sheet">
+          <div id="propertyColor" class="property-color"></div>
+          <p id="propertyDistrict" class="kicker">海湾区</p>
+          <h2 id="propertyName">滨海路</h2>
+          <div class="property-stats">
+            <span><small>版面费</small><strong id="propertyPrice">¥260</strong></span>
+            <span><small>引用收益</small><strong id="propertyRent">¥52</strong></span>
+          </div>
+          <p id="propertyText">投稿决定会同步给房间内所有玩家。</p>
+          <button id="buyButton" class="primary-button" type="button">支付并发表</button>
+          <button id="skipButton" class="secondary-button" type="button">暂不投稿</button>
+        </div>
+      </section>
+
+      <section id="eventOverlay" class="overlay event-overlay hidden" aria-label="科研事件">
+        <div class="event-card">
+          <div id="eventIcon" class="event-icon">?</div>
+          <p id="eventType" class="kicker">科研事件</p>
+          <h2 id="eventTitle">青年科学基金获批</h2>
+          <p id="eventText">项目顺利获批，研究经费到账。</p>
+          <div id="annualReviewTable" class="annual-review-table hidden" aria-label="年度全员学术评议"></div>
+          <strong id="eventAmount" class="event-amount positive">+¥160</strong>
+          <button id="eventButton" class="primary-button" type="button">知道了</button>
+        </div>
+      </section>
+
+      <section id="assetsPanel" class="assets-panel hidden" aria-label="我的论文">
+        <header>
+          <div><small>PUBLICATION LIST</small><h2>我的论文</h2></div>
+          <button id="closeAssetsButton" class="close-button" type="button" aria-label="关闭">×</button>
+        </header>
+        <div class="asset-summary">
+          <span><small>学术资产</small><strong id="netWorth">¥1800</strong></span>
+          <span><small>论文</small><strong id="propertyCount">0</strong></span>
+          <span><small>影响力</small><strong id="buildingCount">0</strong></span>
+        </div>
+        <div id="propertyList" class="property-list"></div>
+      </section>
+
+      <section id="pauseOverlay" class="overlay simple-overlay hidden">
+        <div class="simple-panel">
+          <p class="kicker">LOCAL PAUSE</p>
+          <h2>暂时离开棋盘</h2>
+          <p>联机房间仍会保持连接，回来后自动显示最新状态。</p>
+          <button id="resumeButton" class="primary-button" type="button">返回游戏</button>
+          <a id="exitGameButton" class="secondary-link" href="./">退出学术圈</a>
+        </div>
+      </section>
+
+      <section id="gameOverOverlay" class="overlay simple-overlay hidden">
+        <div class="simple-panel result-panel">
+          <p class="kicker">ONLINE RESULT</p>
+          <h2 id="resultTitle">联机结算</h2>
+          <p id="resultText">科研经费耗尽，本次学术旅程结束。</p>
+          <div id="rankingList" class="ranking-list"></div>
+          <button id="backToLobbyButton" class="primary-button" type="button">返回学术圈</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./online-game.js?v=2026071615"></script>
+  </body>
+</html>

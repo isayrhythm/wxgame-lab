@@ -2,3 +2,6 @@ QQ*.gif
 *.log
 .DS_Store
 Thumbs.db
+node_modules/
+.wrangler/
+_ref_frames/

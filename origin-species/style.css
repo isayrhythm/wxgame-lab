@@ -39,7 +39,7 @@ button { border: 0; }
   min-height: 560px;
   margin: 0 auto;
   overflow: hidden;
-  background: #092a27 url("./assets/microcosm-bg.webp") center/cover;
+  background: #092a27 url("./assets/micro-world.svg") repeat;
   box-shadow: 0 0 54px rgba(0, 10, 11, 0.58);
 }
 
@@ -296,7 +296,7 @@ button { border: 0; }
   align-items: end;
   background:
     linear-gradient(180deg, rgba(2,18,17,.08) 0%, rgba(2,18,17,.2) 32%, rgba(2,18,17,.92) 100%),
-    url("./assets/microcosm-bg.webp") center/cover;
+    url("./assets/micro-world.svg") repeat;
 }
 
 .intro-card,
@@ -389,7 +389,7 @@ h2 { margin: 0; font-size: 27px; line-height: 1.15; }
 .evolution-sheet header { padding: 0 6px; }
 .evolution-sheet header > p:not(.kicker) { margin: 7px 0 14px; font-size: 12px; }
 
-.evolution-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.evolution-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; }
 
 .evolution-card {
   position: relative;
@@ -481,30 +481,124 @@ h2 { margin: 0; font-size: 27px; line-height: 1.15; }
 .path-node:not(:last-child)::after { content: "›"; color: #688c83; font-size: 18px; }
 .path-node i { width: 9px; height: 9px; border-radius: 50%; background: var(--route-color); box-shadow: 0 0 8px var(--route-color); }
 
-.tree-stages { display: grid; gap: 13px; }
-
-.tree-stage {
-  padding: 12px;
-  border-left: 3px solid rgba(119,232,197,.2);
-  background: rgba(255,255,255,.025);
+.tree-stages {
+  position: relative;
+  width: 100%;
+  overflow: auto;
+  padding: 4px 4px 18px;
+  border: 1px solid rgba(174, 238, 219, .1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .12);
+  overscroll-behavior: contain;
 }
 
-.tree-stage > h3 { margin: 0 0 9px; color: #cde9e1; font-size: 12px; }
-.tree-nodes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.lineage-map {
+  position: relative;
+  z-index: 0;
+  display: grid;
+  width: max-content;
+  min-height: 720px;
+  grid-auto-flow: column;
+  grid-auto-columns: 168px;
+  gap: 72px;
+  align-items: start;
+  padding: 12px 18px 26px;
+}
 
-.tree-node {
-  min-width: 0;
-  padding: 9px;
-  border: 1px solid rgba(188,227,216,.1);
+.lineage-links {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.lineage-links path {
+  fill: none;
+  stroke: rgba(121, 159, 148, .17);
+  stroke-width: 2;
+}
+
+.lineage-links path.selected {
+  stroke: #71e4bd;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(113, 228, 189, .55));
+}
+
+.lineage-column {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.lineage-column > h3 {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0 0 4px;
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(176, 236, 219, .12);
+  background: #082622;
+  color: #9fc7bd;
+  font-size: 10px;
+}
+
+.lineage-node {
+  min-height: 78px;
+  padding: 8px;
+  border: 1px solid rgba(188, 227, 216, .1);
   border-radius: 6px;
-  background: rgba(0,0,0,.12);
-  opacity: .46;
+  background: rgba(5, 28, 26, .94);
+  opacity: .38;
 }
 
-.tree-node strong { display: block; overflow-wrap: anywhere; font-size: 11px; }
-.tree-node small { display: block; margin-top: 4px; color: #82a69d; font-size: 9px; line-height: 1.35; }
-.tree-node.chosen { border-color: var(--route-color); opacity: 1; box-shadow: inset 3px 0 0 var(--route-color); }
-.tree-node.next { opacity: .82; }
+.lineage-node small {
+  display: block;
+  margin-bottom: 3px;
+  color: #789b92;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.lineage-node strong {
+  display: block;
+  color: #e9fff8;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.lineage-node span {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #83a69d;
+  font-size: 8px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.lineage-node.chosen {
+  border-color: var(--route-color);
+  box-shadow: inset 3px 0 0 var(--route-color);
+  opacity: 1;
+}
+
+.lineage-node.available {
+  border-color: var(--route-color);
+  opacity: .9;
+  animation: lineage-ready 1.8s ease-in-out infinite;
+}
+
+.lineage-node.current {
+  background: color-mix(in srgb, var(--route-color) 15%, #082622);
+  box-shadow: inset 3px 0 0 var(--route-color), 0 0 16px color-mix(in srgb, var(--route-color) 24%, transparent);
+}
+
+@keyframes lineage-ready {
+  50% { box-shadow: 0 0 13px color-mix(in srgb, var(--route-color) 30%, transparent); }
+}
 
 .final-path {
   display: flex;

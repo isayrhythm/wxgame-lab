@@ -31,7 +31,10 @@ https://isayrhythm.github.io/wxgame-lab/
   左右拖动并落下水果，相同水果碰撞后会逐级合成，挑战更高分和大西瓜。
 
 - **物种起源** (`origin-species/`)
-  操控变形虫探索无限微生态，吞噬比自己弱小的生物积累变异，并在每次变异固定时选择新的进化分支。
+  从前生命分子体系开始收集适配资源，在可视化谱系树上逐步走向病毒旁支、细胞生命、多细胞类群以及代表性的科属种；光合与化能自养路线还会持续从环境获得能量。
+
+- **学术圈** (`monopoly/`)
+  从《江西农业大学学报》起步，向 PLOS ONE、Scientific Reports、学科强刊、医学四大顶刊与 CNS 投稿；发表支付版面费，同行引用贡献收益，每 24 回合年度评帽并继承成果继续下一年。好友房最多 7 人，少于 3 人开局会自动补对手。
 
 ## 本地运行
 
@@ -57,5 +60,6 @@ snake-apple-3d/  贪吃蛇吃苹果
 perfect-circle/   画个圆
 merge-watermelon/ 合成大西瓜
 origin-species/    物种起源
+monopoly/          学术圈
 shared/          公共 UI、本地 Phaser 3 与 Three.js
 ```

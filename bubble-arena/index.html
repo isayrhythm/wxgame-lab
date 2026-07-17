@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+    <meta name="theme-color" content="#0b6570" />
+    <title>泡泡乱斗</title>
+    <link rel="stylesheet" href="./style.css?v=2026071701" />
+  </head>
+  <body>
+    <main class="arena-shell">
+      <header class="topbar">
+        <a class="icon-button back-button" href="../" aria-label="返回小游戏大厅">‹</a>
+        <div class="brand"><small>BUBBLE CLASH</small><strong>泡泡乱斗</strong></div>
+        <div class="status-chip"><i id="connectionDot"></i><span id="connectionText">未连接</span></div>
+        <button id="pauseButton" class="icon-button" type="button" aria-label="暂停">Ⅱ</button>
+      </header>
+
+      <section class="game-stage" aria-label="泡泡乱斗竞技场">
+        <div class="hud">
+          <div class="hud-player"><span id="meColor"></span><b id="meName">玩家</b></div>
+          <div class="stat"><small>水泡</small><b id="bombStat">1</b></div>
+          <div class="stat"><small>威力</small><b id="rangeStat">2</b></div>
+          <div class="stat"><small>速度</small><b id="speedStat">1</b></div>
+          <div class="clock"><small>剩余</small><b id="timeStat">03:00</b></div>
+        </div>
+        <div id="canvasWrap" class="canvas-wrap">
+          <canvas id="gameCanvas" width="600" height="520"></canvas>
+          <div id="roundBanner" class="round-banner hidden"></div>
+        </div>
+        <div id="roster" class="roster" aria-label="玩家状态"></div>
+      </section>
+
+      <section class="mobile-controls" aria-label="手机操作">
+        <div id="joystick" class="joystick"><span id="joystickKnob"></span></div>
+        <div class="action-buttons">
+          <button id="itemButton" class="item-button" type="button"><span>针</span><small id="itemCount">0</small></button>
+          <button id="bubbleButton" class="bubble-button" type="button" aria-label="放置水泡"><i></i></button>
+        </div>
+      </section>
+
+      <section id="entryOverlay" class="overlay">
+        <div class="entry-panel">
+          <div class="bubble-logo"><i></i><i></i><i></i><b>泡</b></div>
+          <p class="kicker">REAL-TIME PARTY BATTLE</p>
+          <h1>泡泡乱斗</h1>
+          <p>放下水泡炸开木箱，拾取强化道具，把对手困进泡泡。最后留在场上的玩家获胜。</p>
+          <label class="name-field"><span>你的昵称</span><input id="playerName" maxlength="10" value="泡泡队长" /></label>
+          <div class="entry-actions">
+            <button id="practiceButton" class="primary-button" type="button">单人练习</button>
+            <button id="createButton" class="secondary-button" type="button">创建联机房间</button>
+          </div>
+          <div class="join-row">
+            <input id="roomCodeInput" maxlength="6" placeholder="输入 6 位房间码" />
+            <button id="joinButton" type="button">加入</button>
+          </div>
+          <div class="rule-strip"><span>最多 6 人</span><span>Bot 自动补位</span><span>3 分钟乱斗</span></div>
+        </div>
+      </section>
+
+      <section id="roomOverlay" class="overlay hidden">
+        <div class="room-panel">
+          <p class="kicker">BATTLE ROOM</p>
+          <div class="room-heading"><div><small>房间码</small><h2 id="roomCode">------</h2></div><button id="copyCodeButton" type="button">复制</button></div>
+          <div id="roomPlayers" class="room-players"></div>
+          <p id="roomHint" class="room-hint">等待房主开始</p>
+          <button id="startButton" class="primary-button" type="button">开始乱斗</button>
+          <button id="leaveButton" class="secondary-button" type="button">离开房间</button>
+        </div>
+      </section>
+
+      <section id="pauseOverlay" class="overlay hidden">
+        <div class="simple-panel">
+          <p class="kicker">PAUSED</p><h2>全场暂停</h2>
+          <p>房主恢复后继续战斗。</p>
+          <button id="resumeButton" class="primary-button" type="button">继续</button>
+        </div>
+      </section>
+
+      <section id="resultOverlay" class="overlay hidden">
+        <div class="result-panel">
+          <div id="resultBadge" class="result-badge">胜</div>
+          <p class="kicker">BATTLE RESULT</p>
+          <h2 id="resultTitle">乱斗结束</h2>
+          <p id="resultText"></p>
+          <div id="resultRanking" class="result-ranking"></div>
+          <button id="againButton" class="primary-button" type="button">再来一局</button>
+          <button id="resultLeaveButton" class="secondary-button" type="button">返回大厅</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+    <script src="./game.js?v=2026071701"></script>
+  </body>
+</html>

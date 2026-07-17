@@ -36,6 +36,9 @@ https://isayrhythm.github.io/wxgame-lab/
 - **学术圈** (`monopoly/`)
   从《江西农业大学学报》起步，向 PLOS ONE、Scientific Reports、学科强刊、医学四大顶刊与 CNS 投稿；发表支付版面费，同行引用贡献收益，每 24 回合年度评帽并继承成果继续下一年。好友房最多 7 人，少于 3 人开局会自动补对手。
 
+- **泡泡乱斗** (`bubble-arena/`)
+  原创海岛泡泡对战。支持单人练习和 6 人好友房，放置水泡炸开十字水柱，破坏箱子拾取泡泡数量、威力、速度、针和护盾强化，坚持到最后即可获胜。
+
 ## 本地运行
 
 这个项目是静态页面，可以直接用任意静态服务器打开。示例：
@@ -61,5 +64,6 @@ perfect-circle/   画个圆
 merge-watermelon/ 合成大西瓜
 origin-species/    物种起源
 monopoly/          学术圈
+bubble-arena/      泡泡乱斗
 shared/          公共 UI、本地 Phaser 3 与 Three.js
 ```

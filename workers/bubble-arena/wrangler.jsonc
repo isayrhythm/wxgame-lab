@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wxgame-bubble-arena",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-17",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BUBBLE_ROOMS",
+        "class_name": "BubbleRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["BubbleRoom"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
